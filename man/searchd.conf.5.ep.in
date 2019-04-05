@@ -1,0 +1,283 @@
+.\" $Id: searchd.conf.5.ep.in,v 1.22 2003/01/13 10:15:16 kir Exp $
+.\" @configure_input@
+.TH searchd.conf 5 "$Date: 2003/01/13 10:15:16 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+searchd.conf \- searchd configuration file
+.SH SYNOPSIS
+\fB@sysconfdir@/searchd.conf\fR
+.SH DESCRIPTION
+\fBsearchd.conf\fR is a configuration file for \fBsearchd\fR(1).
+The following parameters can be defined:
+.SS General
+.TP
+\fBDBAddr\fR \fBDBType\fR:[//[\fBUser\fR[:\fBPass\fR]@]\fBHost\fR[:\fBPort\fR]]/\fBDBName\fR/
+Defines SQL server connection parameters.
+.br
+\fBDBType\fR is SQL server type, it can be \fImysql\fR or \fIoracle8\fR
+for now.
+.br
+\fBUser\fR is a SQL server's user to connect as.
+.br
+\fBPass\fR is a \fBUser\fR's password. If this field is omitted,
+no password is used.
+.br
+\fBHost\fR is a host name or IP address of host to connect to. If you
+are running SQL server on the same machine, use \fIlocalhost\fR.
+.br
+\fBPort\fR is a port number on which database is listening for SQL queries.
+Default is the same as default port of used SQL server.
+.br
+\fBDBName\fR is a name of the database used.
+.TP
+\fBPort\fR \fInum\fR
+Sets the port number on which \fBsearchd\fR(1) is listens to
+\fBs.cgi\fR(1) queries. Default is \fI12345\fR.
+.TP
+\fBDBLibDir\fR \fI/some/dir\fR
+Adds \fI/some/dir\fR to list of directories to search for database
+backend library (lib\fIdbname\fR-\fIversion\fR.so).
+Default library search path is
+\fB\f(CW@libdir@\fR. Several such options can be used, each adding
+one more directory to the list. Last added directory is used first;
+compiled in path is last.
+.TP
+\fBAllowFrom \fIsome.host.com\fR | \fIxxx.xxx.xxx.xxx\fR[/\fIyy\fR]
+This implements access control list, so \fBsearchd\fR(1) will only accept
+connections from host(s) specified. Several such options can be used.
+You can specify hostname, IP address, or subnet (IP address
+with mask in CIDR notation).
+.TP
+\fBDataDir\fR \fI /some/dir
+Sets directory in which delta files and files with information
+about words, subsets, spaces will be stored.
+Default is \fB\f(CW@localstatedir@\fR.
+.TP
+\fBDebugLevel\fR \fInone\fR | \fIerror\fR | \fIwarning\fR | \fIinfo\fR | \fIdebug\fR
+Sets the level of debugging. If set to \fInone\fR, nothing will be logged. If
+set to \fIdebug\fR, you will get a bunch of messages. Default value is
+\fIinfo\fR.
+.TP
+\fBMinFixedPatternLength\fR \fInum\fR
+Sets the minimal length of fixed part of word with pattern (like someth*)
+to be allowed in search query. Words shorter than this value will be
+rejected with appropriate error.  Setting this to less than 3 will open
+ASPseek to DoS attacks. Default value is \fI6\fR.
+.TP
+\fBMaxThreads\fR \fInum\fR
+Sets the maximum number of threads that search daemon can run simultaneously
+to process queries. Setting high value can result in big memory consumption.
+Setting low value can result in big response time for queries in high load
+conditions (as "extra" queries are queued). Default value is \fI10\fR.
+.TP
+\fBMultipleDBConnections\fR \fIyes\fR | \fIno\fR
+Sets whether to use separate connection to the database for each thread.
+If multiple connections are used, this leads to better concurrency between
+threads, especially when one or more threads perform pattern search and
+the other is trying to perform simple search. Default is \fIyes\fR.
+.TP
+\fBInclude\fR \fIfile\fR
+Includes the contents of \fIfile\fR at this point, so you can specify some
+parameters in that included \fIfile\fR. File name is relative
+to ASPseek etc directory (\fB\f(CW@sysconfdir@\fR).
+.SS Database format parameters
+These parameters tells \fBsearchd\fR(1) what database format is used by
+\fBindex\fR(1), so their values should be set to the same values as
+in \fBaspseek.conf\fR file.
+.TP
+\fBHiByteFirst\fR \fIyes\fR | \fIno\fR
+Sets the byte ordering used in field \fBwordurl[1].word\fR
+(only in Unicode version). Default is \fIno\fR.
+.TP
+\fBIncrementalCitations\fR \fIyes\fR | \fIno\fR
+Sets whether the data produced by \fBindex\fR(1) is in "incremental citations"
+format. Default is \fIyes\fR.
+.TP
+\fBCompactStorage\fR \fIyes\fR | \fIno\fR
+Sets the index storage mode. Default is \fIyes\fR.
+.TP
+\fBUtfStorage\fR \fIyes\fR|\fIno\fR
+This parameter has sense only in Unicode version and only for MySQL back-end.
+In UTF8 storage mode fields \fBwordurl[1].word\fR are stored in UTF8 encoding.
+This mode can reduce sizes of data and index files for \fBwordurl\fR table.
+To convert existing Unicode database to this mode, run \fBindex -b\fR.
+Default value is \fIno\fR.
+.SS Ispell support parameters
+When \fBASPseek\fR is used with ispell support, \fBsearchd\fR(1) can optionally
+find all forms for all specified words (example: 'create' -> 'create'
+OR 'created' OR 'creates'). This scheme retains exact search possibility.
+Note that only ispell suffixes are supported by now; prefixes are usually
+change the word meanings, for example if somebody searches for the word
+\fBtested\fR he hardly wants \fIuntested\fR to be found.
+.PP
+Ispell affixes file contains rules for words and has the following format:
+.PP
+.nf
+.nh
+\f(CWflag V:
+\ E     >  -E,IVE     # As in create > creative
+\ [^E]  >  IVE        # As in prevent > preventive
+
+flag *N:
+\ E     >  -E,ION     # As in create > creation
+\ Y     >  -Y,ICATION # As in multiply > multiplication
+\ [^EY] >  EN         # As in fall > fallen
+.fi
+\fR
+.hy
+.PP
+Ispell dictionary file contains words themselves and has format like this:
+.PP
+.nf
+\f(CWwop/S
+word/DGJMS
+wordage/S
+wordbook
+wordily
+wordless/P
+.fi
+\fR
+.PP
+Note that if you add ispell support to already existing database, re-indexing
+is not required.
+.PP
+You may also use ispell flags in this file if you know how to do it.
+This will allow not to write the same word with different endings to the
+rare words file, for example "webmaster" and "webmasters". You may choose
+the word which have the same changing rules from existing ispell dictionary
+and just to copy flags from it. For example, English dictionary has this line:
+.PP
+.nf
+\f(CWpostmaster/MS
+.fi
+\fR
+.PP
+So, webmaster with MS flags will be probably OK:
+.PP
+.nf
+\f(CWwebmaster/MS
+.fi
+\fR
+.PP
+You can get ispell affix and dictionary files for different languages from
+\f(CWhttp://fmg-www.cs.ucla.edu/fmg-members/geoff/ispell-dictionaries.html\fR
+.PP
+To make \fBASPseek\fR support ispell the following parameters are used.
+\fIlang\fR argument is two letters language abbreviation. File names used
+are relative to ASPseek etc directory (\fB\f(CW@sysconfdir@\fR).
+Absolute paths can be also specified.
+.TP
+\fBAffix\fR \fIlang\fR \fIaffix-file\fR [\fIcharset\fR]
+Load ispell affixes for language \fIlang\fR from file \fIaffix-file\fR.
+If \fIcharset\fR is given, file contents is assumed to be in that charset,
+otherwise the value from \fBLocalCharset\fR is used.
+.TP
+\fBSpell\fR \fIlang\fR \fIdict-file\fR [\fIcharset\fR]
+Load ispell dictionary for language \fIlang\fR from file \fIdict-file\fR.
+If \fIcharset\fR is given, file contents is assumed to be in that charset,
+otherwise the value from \fBLocalCharset\fR is used.
+.TP
+\fBWordForms\fR \fIon\fR | \fIoff\fR | \fIlang\fR[,\fIlang\fR[,...]]
+Sets whether to search for different word forms by default. Argument can be
+\fIon\fR, \fIoff\fR, or comma-separated list of languages. Value can
+be overridden by \fBfm\fR parameter of \fBs.cgi\fR(1).
+.SS Ranking parameters
+.TP
+\fBSiteWeight\fR \fIhttp://www.site.com/\fR \fInum\fR
+Sets the priority for \fIhttp://www.site.com/\fR site to value \fInum\fR.
+Default priority for all sites is 0. If the priority of site is greater
+than 0, then it will always be displayed before all the other results.
+If the priority of site is less than 0, then it
+will always be displayed after all the other results.
+
+Please note that site name should be started with \fBhttp://\fR and end with
+a slash (\fB/\fR).
+.TP
+\fBAccountDistance\fR \fIon\fR | \fIoff\fR
+Specifies whether \fBsearchd\fR(1) should that into account distance from the
+beginning of document section to search terms for ranking calculations.
+If this parameter is on, then documents with search terms closer
+the beginning of section have higher priority over others, otherwise
+distance doesn't matter. Default is \fIon\fR.
+Value can be overridden by \fBad\fR parameter of
+\fBs.cgi\fR(1).
+.SS Results cache parameters
+\fBsearchd\fR can implement results cache, so results for next page queries and
+for queries that are the same as were before will be taken from cache. The
+following parameters are used.
+.TP
+\fBCache\fR \fIon\fR
+If this line is present, results cache will be enabled. By default cache is
+disabled.
+.TP
+\fBCacheLocalSize\fR \fInumber\fR
+Size of cache, in entries (one entry for one query). Default value is
+\fI100\fR.
+.TP
+\fBCachedUrls\fR \fInumber\fR
+Number of resulting URLs to be stored in one cache entry. Default value is
+\fI200\fR.
+.SS Charset configuration for non-Unicode version
+Charset configuration for non-Unicode version is usually stored in
+file \fB\f(CW@sysconfdir@/charsets.conf\fR. Charset files for non-Unicode version
+can be found in \fB\f(CW@sysconfdir@/charsets\fR directory. Langmap files
+can be found in \fB\f(CW@sysconfdir@/langmap\fR directory.
+.TP
+\fBCharsetTable\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the table for \fIcharset\fR of language \fIlang\fR from \fIfile\fR.
+Optionally load langmap file \fIlmfile\fR, which is used for charset guesser.
+.TP
+\fBCharsetAlias\fR \fIcharset\fR \fIalias1\fR [\fIalias2\fR...]
+Defines \fIalias1\fR, \fIalias2\fR, ... as aliases (alternative names)
+for \fIcharset\fR. This is needed because in many cases there is no
+"one true name" for the charset - different web servers and page
+authors use different names.
+.TP
+\fBLocalCharset\fR \fIcharset\fR
+Sets the local charset for ASPseek, so all data in the database is assumed
+to be in that charset.
+.SS Charset configuration for Unicode version
+Charset configuration for Unicode version is usually stored in
+file \fB\f(CW@sysconfdir@/ucharset.conf\fR. Charset files for Unicode version
+can be found in \fB\f(CW@sysconfdir@/tables\fR directory.
+.TP
+\fBCharsetTableU1\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the Unicode mapping for \fIcharset\fR of language \fIlang\fR from
+\fIfile\fR. Optionally load langmap file \fIlmfile\fR, which is used for
+charset guesser.
+.TP
+\fBCharsetTableU2\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the Unicode mapping for multibyte \fIcharset\fR of language
+\fIlang\fR from \fIfile\fR. Optionally load langmap file \fIlmfile\fR,
+which is used for charset guesser.
+.TP
+\fBDictionary2\fR \fIlang\fR \fIfile\fR [\fIcharset\fR]
+Loads dictionary for \fIlang\fR from \fIfile\fR. If \fIcharset\fR is not
+specified, it is assumed that the file is in Unicode. Dictionary is used
+for tokenizing of text in Chinese, Japanese and Korean languages.
+.SS Stopwords
+Stopwords configuration is usually stored in file
+\fB\f(CW@sysconfdir@/stopwords.conf\fR. Stopword files for different languages
+can be found in \fB\f(CW@sysconfdir@/stopwords\fR directory.
+.TP
+\fBStopwordFile \fIlang\fR \fIfile\fR [\fIcharset\fR]
+Loads stopwords for language \fIlang\fR from \fIfile\fR. If \fIcharset\fR
+is not specified, file contents is assumed to be in \fBLocalCharset\fR,
+otherwise it is in \fIcharset\fR.
+.SH FILES
+\fB\f(CW@sysconfdir@/searchd.conf\fR
+.br
+\fB\f(CW@sysconfdir@/charsets.conf\fR
+.br
+\fB\f(CW@sysconfdir@/ucharset.conf\fR
+.br
+\fB\f(CW@sysconfdir@/stopwords.conf\fR
+.SH BUGS
+Many parameters are the same in \fBsearchd.conf\fR and in
+\fBaspseek.conf\fR(5).
+.SH SEE ALSO
+.BR searchd (1),
+.BR aspseek.conf (5).
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>

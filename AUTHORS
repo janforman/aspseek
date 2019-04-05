@@ -1,0 +1,26 @@
+ASPseek authors
+
+Core Developers
+===============
+
+* Alexander F. Avdonkin <al@asplinux.ru>
+* Kir Kolyshkin <kir@asplinux.ru>
+* Igor Sukhih <igor@asplinux.ru>
+
+WARNING:
+  Don't use authors' email addresses for other than personal communication.
+  All ASPseek-related mail should be addressed to <aseek@sw.com.sg>
+  or to one of the appropriate mailing lists.
+
+Major Contributors
+==================
+
+* Matt Sullivan <matt@sullivan.gen.nz>
+Debian package maintenance, a number of bugfixes and improvements.
+
+* Ivan Gudym <ignite@ukr.net>
+Apache module, libaspseek
+
+Latest Patches
+==============
+* Jan Forman <forman@earthcom.info>

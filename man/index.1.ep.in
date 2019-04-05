@@ -1,0 +1,203 @@
+.\" $Id: index.1.ep.in,v 1.14 2002/07/19 14:30:42 kir Exp $
+.\" @configure_input@
+.TH index 1 "$Date: 2002/07/19 14:30:42 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+index \- indexing program
+.SH SYNOPSIS
+\fBindex\fR [\fB-a\fR] [\fB-m\fR] [\fB-o\fR] [\fB-n\fR \fInum\fR]
+[\fB-q\fR] [\fB-N\fR \fInum\fR]
+[\fB-s\fR \fIstatus\fR] [\fB-t\fR \fItag\fR] [\fB-u\fR \fIpattern\fR]
+[\fB-r\fR \fIfile\fR] [\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-i\fR [\fB-u\fR \fIurl\fR | \fB-f\fR \fIfile\fR]
+[\fB-r\fR \fIfile\fR] [\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-T\fR \fIurl\fR [\fB-A\fR \fInum\fR]
+[\fB-r\fR \fIfile\fR] [\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-S\fR
+[\fB-s\fR \fIstatus\fR] [\fB-t\fR \fItag\fR] [\fB-u\fR \fIpattern\fR]
+[\fB-r\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-M\fR [\fB-a\fR] [\fB-m\fR]
+[\fB-q\fR] [\fB-N\fR \fInum\fR]
+[\fB-r\fR \fIfile\fR] [\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-C\fR [\-w]
+[\fB-s\fR \fIstatus\fR] [\fB-t\fR \fItag\fR] [\fB-u\fR \fIpattern\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-E\fR | \fB-D\fR | \fB-B\fR | \fB-K\fR | \fB-U\fR |
+[\fB-r\fR \fIfile\fR] [\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR
+\fB-X1\fR | \fB-X2\fR | \fB-H\fR
+[\fB-g\fR \fIfile\fR]
+[\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-A\fR \fInum\fR \fB-u\fR \fIpattern\fR [\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-P\fR \fIURL\fR [\fIconfigfile\fR]
+.PP
+\fBindex\fR \fB-h\fR | \fB-?\fR
+.SH DESCRIPTION
+\fBindex\fR is a component of \fBASPseek\fR that performs Web crawling,
+documents downloading, parsing and storing. It can also be used to
+manipulate the \fBASPseek\fR database.
+.PP
+During indexing process, \fBindex\fR walks across the sites and stores
+found pages in a special data structures called delta files, and in SQL
+database.
+.PP
+When there is no more pages to index (or upon executing \fBindex -D\fR),
+it sorts delta files and merges information from delta files
+into searchable database).
+.PP
+\fBindex\fR supports HTTP and HTTP over SSL (https) protocols, and can parse
+documents in HTML and plain text formats. Support for other formats can be
+achieved via external converter programs.
+.PP
+The operation of \fBindex\fR is mostly controlled by its configuration
+file \fBaspseek.conf\fR(5), which is read upon startup. You can give
+configuration file name as a last argument to \fBindex\fR.
+.\" FIXME add more text here
+.SH OPTIONS
+.SS Indexing options
+.IP \fB-n\fR\ \fInumber\fR
+Index only \fInumber\fR of documents and exit. Note that you should run
+\fBindex -D\fR manually after running \fBindex -n\fR. Actual number of
+documents indexed can be a little higher than value requested if you use
+many threads.
+.IP \fB-N\fR\ \fInumber\fR
+Run \fInumber\fR of \fBindex\fR threads. It makes sense if you have many
+different sites to index, since no two threads are allowed to index the
+same site.
+.IP \fB-R\fR\ \fInumber\fR
+Run \fInumber\fR of resolver processes. Default is
+(argument of \fB-N\fR option)/5 + 1.
+It makes sense to increase the default value if your name server is slow.
+.IP \fB-i\fR
+Insert new URLs to database. URLs to insert can be given using
+\fB-u\fR or \fB-f\fR options.
+.SS Re-indexing control
+.IP \fB-a\fR
+Re-index all documents regardless of their expiration status. Normally (without
+this option) only documents that have indexed earlier than \fBPeriod\fR time
+ago are re-indexed.
+.IP \fB-m\fR
+Store words and hrefs found in documents regardless of their modification
+status. Normally (without this option) only those documents that have
+changed since last re-indexing are parsed.
+.IP \fB-o\fR
+Index documents with less hops first. Here "hops" means the "depth" value
+of the document.
+.IP \fB-q\fR
+Don't add URLs from \fBServer\fR configuration command (and their
+corresponding \fBrobots.txt\fR URLs) to database. This can be used if you
+haven't changed your \fBaspseek.conf\fR(5) after last \fBindex\fR run and
+is believed to speed up \fBindex\fR startup in case you have several
+thousands \fBServer\fR entries in config.
+.IP \fB-M\fR
+Index URLs which were indexed by previous indexing session. These URLs are
+stored in \fBtmpurl\fR SQL table. Used mostly for debugging purposes.
+.SS Indexing to real-time database
+.IP \fB-T\fR\ \fIURL\fR
+Index \fIURL\fR to real-time database, so it will be available for
+searching in seconds. Note that you can't add too many documents to real-time
+database, otherwise the subsequent indexing to real-time database will be
+extremely slow. Actual limit of documents in real-time database is
+hardware dependent; well, about 1000 URLs should work OK. Documents from
+real-time database are merged to main database upon executing \fBindex -D\fR.
+
+This option is used to frequently re-index ever-changing
+pages (like first pages of news sites), or to re-index URL out-of-the-order
+(when you know it has just been changed) and see results immediately. Note that
+you can use \fB-A\fR option together with this one.
+.SS Clearing the database
+.IP \fB-C\fR
+Clear the database. You can use subsection control options (described below)
+to limit clearing to some part of the database. Note that clearing with limits
+may be quite slow on large database.
+.IP \fB-w\fR
+Used together with \fB-C\fR to disallow asking for confirmation before
+clearing.
+.SS Statistics
+.IP \fB-S\fR
+Print simple database statistics. You can use subsection control options
+(described below) together with this option.
+.SS Subsection control
+In most cases you can combine any of \fB-u\fR, \fB-s\fR and \fB-t\fR options.
+.IP \fB-s\fR\ \fIstatus\fR
+Limit index to documents matching \fIstatus\fR (HTTP Status code, or 0 for documents
+that were not yet indexed.
+.IP \fB-t\fR\ \fItag\fR
+Limit index to documents matching \fItag\fR. Tags can be set in
+\fBaspseek.conf\fR(5) file.
+.IP \fB-u\fR\ \fIpattern\fR
+Limit index to documents with URLs matching \fIpattern\fR (supports SQL LIKE
+wildcard characters '\fB%\fR' and '\fB_\fR').
+.IP \fB-f\fR\ \fIfile\fR
+Read URLs to be indexed/inserted/cleared from \fIfile\fR.
+You can use \fI-\fR as file name, in that case
+URL list will be read from \fBstdin\fR.
+.SS Output
+.IP \fB-r\fR\ \fIfile\fR
+Redirect output to \fIfile\fR.
+.IP \fB-g\fR\ \fIfile\fR
+Sets indexing statistics log file name to \fIfile\fR. Default is
+\fB\f(CW@localstatedir@/\fIDBName\fR\fB\f(CW/logs.txt\fR.
+.SS Stopping index
+.IP \fB-E\fR
+Safely stop already running \fBindex\fR process. Usable from scripts.
+.SS Database repairing
+.IP \fB-X1\fR
+Check the inverted index for URLs for which \fBdeleted\fR field in
+\fBurlword\fR SQL table is non-zero, or \fBstatus\fR field is not 200,
+or \fBorigin\fR field is not 1.
+.IP \fB-X2\fR
+Fix the above case by appending information about deleted keys to delta files.
+So, if you want to remove such records,
+run \fBindex -X2\fR, \fBindex -D\fR and finally perform SQL statements
+to delete unnecessary records.
+.IP \fB-H\fR
+Recreate citation indexes and ranks file from \fBurlwords\fINN\fB.hrefs\fR
+fields in case of citation index corruption.
+.SS Database operations
+.IP \fB-D\fR
+Merge delta files into main database. This implies \fB-B\fR, \fB-K\fR
+and \fB-U\fR.
+.IP \fB-B\fR
+Generate subsets and spaces.
+.IP \fB-K\fR
+Calculate PageRanks.
+.IP \fB-U\fR
+Calculate total number of non-empty URL, which is saved to
+\fB\f(CW@localstatedir@/\fIDBName\fR\fB\f(CW/total\fR file).
+.SS Miscellaneous
+.IP \fB-P\fR\ \fIURL\fR
+Prints path to specified \fIURL\fR. Here path means the way by which index
+found that URL by outgoing links.
+.IP \fB-A\fR\ \fIspace_id\fR
+Add/delete a site to/from web space (use together with \fB-u\fR or \fB-A\fR
+options).
+.SS Getting help
+.IP \fB-h\fR,\ \fB-?\fR
+Print short help page.
+.SH FILES
+\fB\f(CW@sysconfdir@/aspseek.conf\fR
+.br
+\fB\f(CW@localstatedir@/\fIDBName\fR\f(CW/logs.txt\fR
+.SH SEE ALSO
+.BR aspseek (7),
+.BR aspseek.conf (5),
+.BR aspseek-sql (5).
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>

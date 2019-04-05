@@ -1,0 +1,267 @@
+.\" $Id: s.cgi.1.ep.in,v 1.21 2002/12/25 13:08:27 kir Exp $
+.\" @configure_input@
+.TH s.cgi 1 "$Date: 2002/12/25 13:08:27 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+s.cgi \- aspseek search CGI front-end
+.SH SYNOPSIS
+\fBhttp://your.host.com/cgi-bin/s.cgi\fR[?\fBparameter=\fIvalue\fR[&\fBparameter\fR=\fIvalue\fR...]]
+.SH DESCRIPTION
+\fBs.cgi\fR is a search front-end of aspseek. It is a CGI program, so
+usually it is run by web server. \fBs.cgi\fR parses its options,
+reads its configuration and template from \fBs.htm\fR(5) file residing
+in @sysconfdir@ directory, makes a query to \fBsearchd\fR(1),
+formats the results according to template, and outputs HTML page
+containing results found, or error, or empty search form in case
+no query was specified.
+.PP
+Functionality of \fBs.cgi\fR related to template and meta symbols
+is described in \fBs.htm\fR(5).
+.SH OPTIONS
+.IP "\fBq\fR=\fIquery\fR" 10
+Query string. Input line in search form, used for query entering,
+should be named "\fBq\fR".
+.IP "\fBul\fR=\fIsql_pattern\fR [\fIsql_pattern\fR ...]" 10
+.IP "\fBul\fR=\fIsite\fR [\fIsite\fR ...]" 10
+URL mask. Several masks can be used, delimited by exactly 1 space.
+This parameter can also be used multiple times, values are concatenated.
+\fIsql_pattern\fR specifies subdirectory of site, and record in \fBsubsets\fR
+table containing value of \fIsql_pattern\fR in the field \fBmask\fR must exist.
+\fIsite\fR specifies the whole site, it should be in the form
+\fIhttp://www.sitename.com/\fR. Note that \fIsql_pattern\fRs and \fIsite\fRs
+can not be mixed together. Examples:
+.nf
+\fBul\fR=\fIhttp://www.aspstreet.com/\fR
+\fBul\fR=\fIhttp://www.aspstreet.com/directory/%\fR
+.fi
+.IP "\fBr\fR=\fIquery\fR" 10
+Previous query string. Used for searching in results, when \fBin\fR
+parameters is equal to \fIon\fR.
+.IP "\fBs\fR=\fIrate\fR | \fIdate\fR" 10
+Result sorting type. \fIrate\fR means sorting by rate (relevance),
+and \fIdate\fR means sorting by last modification date. Sorting order is
+descending, so results with greater rate or latter modification date will
+be first ones.
+.IP "\fBin\fR=\fIon\fR" 10
+Used for "search within results" feature. If value of this parameter is
+\fIon\fR, then actual query is composed from parameters \fBq\fR and \fBr\fR
+combined by AND. Any other value is ignored.
+Checkbox "Search within results" in query form, that is displayed in search
+results, should be named \fBin\fR. Also, the following string should be put
+in query form:
+.nf
+\f(CW<INPUT TYPE="hidden" NAME="r" VALUE="$q">\fR
+.fi
+.IP \fBt\fR=\fIquery\fR 10
+Used for "Take me there" feature. If this parameter is present, then
+\fBs.cgi\fR finds first results matching query and generates output
+for redirection to that URL.
+.IP "\fBch\fR=\fIurl\fR" 10
+"Cached" URL. This parameter is used for displaying "cached" copy of web page.
+Can be combined with \fBq\fR, \fBcs\fR and \fBtmpl\fR parameters.
+If \fBq\fR and \fBcs\fR parameters are present, then appropriate query terms
+will appear highlighted in "cached" page.
+.IP \fBnp\fR=\fInumber\fR 10
+Result page number. Default value is \fI0\fR.
+.IP \fBps\fR=\fInumber\fR 10
+Number of results per page. Overrides value set by "preferences" cookie.
+.IP \fBgr\fR=\fIoff\fR 10
+Grouping results by site. If value of this parameter is \fIoff\fR, then
+results are not grouped by site. Any other value is ignored.
+.IP \fBst\fR=\fInumber\fR 10
+Site ID. Value of this parameter is used to restrict search by specified site.
+Generated in search results, as result of $SH meta symbol, which is used in
+\fBmoreurls\fR template.
+.IP \fBtmpl\fR=\fIfile\fR 10
+Template file name. \fIfile\fR is relative to \f(CW@sysconfdir@\fR
+directory.
+Default is constructed from the part of \fBs.cgi\fR name before point
+with \fI.htm\fR added, so \fBs.cgi\fR will look for \fBs.htm\fR, and
+if you rename it to \fBanother.cgi\fR, it will look for \fBanother.htm\fR.
+.IP \fBsp\fR\fIN\fR=\fIon\fR 10
+Space ID. \fIN\fR is one or more digits value. If value of this parameter
+is \fIon\fR, then search is restricted by web space with ID equal to \fIN\fR.
+Any other value is ignored. This parameter can be used multiple times,
+all spaces are being ORed.
+.br
+To assign particular site to web space, insert record with appropriate
+values or site ID and space ID into table \fBspaces\fR.
+.IP "\fBcs\fR=\fIcharset\fR" 10
+Source charset. Tells \fBs.cgi\fR which \fIcharset\fR is used in input query.
+This is required parameter if non-ascii characters are used in query.
+Results of query will also be presented in that \fIcharset\fR.
+.IP "\fBfm\fR=\fIon\fR | \fIoff\fR | \fIlang\fR[,\fIlang\fR,..]" 10
+Word forms. Can be comma-separated list of languages or just \fIon\fR
+or \fIoff\fR. In case it is not set to \fIoff\fR, \fBs.cgi\fR will search
+for all forms of specified words, and results with exact word forms
+will be displayed first.
+.br
+Example: if word 'create' is specified, then documents containing
+either 'create' or 'creates' or 'created' will be found.
+.IP \fBad\fR=\fIon\fR 10
+Account distance. If value is \fIon\fR, then \fBs.cgi\fR ranks documents
+with search terms closer to the beginning higher. Any other value is ignored.
+Overrides \fBAccountDistance\fR parameter in \fBsearchd.conf\fR(5).
+.IP \fBln\fR=\fIurl\fR 10
+Link to page. Tells to \fBs.cgi\fR to find pages which have link to the
+specified \fIurl\fR. If protocol in \fIurl\fR is omitted, then http://
+is implied. If \fIurl\fR is not found and last symbol is not '/',
+than \fBs.cgi\fR tries to find URL with '/' at the end.
+.SS Limiting search scope to certain parts of HTML pages
+Parameters \fBbd\fR, \fBds\fR, \fBkw\fR and \fBtl\fR can be used together.
+.IP \fBbd\fR=\fIon\fR 10
+Search in body. If value of this parameter is \fBon\fR, then advanced
+search will be performed only within HTML <BODY>...</BODY>. Any other value
+is ignored.
+.IP \fBds\fR=\fIon\fR 10
+Search in description. If value of this parameter is \fBon\fR, then advanced
+search will be performed only within HTML <META NAME="DESCRIPTION"...>.
+Any other value is ignored.
+.IP "\fBkw\fR=\fIon\fR" 10
+Search in keywords. If value of this parameter is \fBon\fR, then advanced
+search will be performed only within HTML <META NAME="KEYWORDS"...>.
+Any other value is ignored.
+.IP "\fBtl\fR=\fIon\fR" 10
+Search in title. If value of this parameter is \fBon\fR, then advanced
+search will be performed only within HTML <TITLE>...</TITLE>. Any other value
+is ignored.
+.SS Limiting search scope to certain period of dates
+.IP "\fBdt\fR=\fIback\fR | \fIer\fR | \fIrange\fR" 10
+Type of time limit. See below.
+.IP "\fBdp\fR=\fIdate\fR" 10
+If 'dt' is 'back', that means you want to limit result to recent pages, so you
+specify that "recentness" in \fIdate\fR value, that is specified in the form
+\fIxxxA\fR[\fIyyyB\fR...], there \fIxxx\fR, \fIyyy\fR are numbers (which can
+also be negative), and \fIA\fR, \fIB\fR can be one of the following (the
+letters below are the same as in \fBstrptime\fR(3) and \fBstrftime\fR(3)
+functions):
+
+.TS
+box;
+cB | cB
+rfI | l.
+Character	Meaning
+_
+s	second
+M	minute
+h	hour
+d	day
+m	month
+y	year
+.TE
+
+Examples of values for \fBdp\fR parameter:
+
+.TS
+allbox;
+cB cB cB
+lfI l n.
+String	Meaning	Value, s
+4h30m	2 hours and 30 minutes	16200
+1Y6m-15d	T{
+1 year and six month minus 15 days
+T}	45792000
+1h-60M+1s	T{
+1 hour minus 60 minutes plus 1 second
+T}	1
+.TE
+
+Note that \fBASPseek\fR do not use minutes and seconds of document's
+last modification date, so specifying something more precise than
+hour is useless (but still allowed).
+.IP "\fBdx\fR=\fI1\fR | \fI-1\fR" 10
+If \fBdt\fR is \fIer\fR (which is short for newer/older), that means the search
+will be limited to pages newer or older than date given. Parameter \fBdx\fR is
+newer/older flag, value \fI1\fR means "newer" or "after", and value \fI-1\fR
+means "older" or "before". The actual date is separated into
+\fBdd\fR, \fBdm\fR, \fBdy\fR fields as follows.
+.IP \fBdd\fR=\fInumber\fR 10
+Day of month (1...31)
+.IP "\fBdm\fR=\fInumber\fR" 10
+Month (0 - January, 1 - February, .., 11 - December)
+.IP \fBdy\fR=\fInumber\fR 10
+Year (four digits, for example 2001)
+.IP \fBdb\fR=\fIdd/mm/yyyy\fR 10
+.IP \fBde\fR=\fIdd/mm/yyyy\fR 10
+If \fBdt\fR is \fIrange\fR, that means search within given range of dates.
+Parameters \fBdb\fR and \fBde\fR are used in this case and stands for
+beginning and ending date, respectively. Each date is in the form
+\fIdd/mm/yyyy\fR, there \fIdd\fR is day of month number (1...31), \fImm\fR is
+month number (1...12), and \fIyyyy\fR is four-digits year.
+.IP \fBfr\fR=\fIvalue\fR
+.IP \fBto\fR=\fIvalue\fR
+These parameters are passed to \fBs.cgi\fR in subsequent search pages;
+they contains date and time in internal format used by \fBs.cgi\fR.
+.SS Advanced search
+.IP \fBiq\fR=\fIwords\fR 10
+Include \fIwords\fR. Used in advanced search. If this parameter is not empty,
+then parameter \fBq\fR is not used.
+.IP \fBxq\fR=\fIwords\fR 10
+Exclude \fIwords\fR. Used in advanced search. All words found in value
+of this parameter will be added to query with \fB-\fR sign before them.
+.IP \fBim\fR=\fIp\fR 10
+Include mode. If value of this parameter is equal to \fIp\fR, then value
+of parameter \fBiq\fR is double-quoted, which means pages containing
+phrase must be found.
+.IP \fBxm\fR=\fIp\fR 10
+Exclude mode. If value of this parameter is equal to \fIp\fR, then value
+of parameter \fBxq\fR is double-quoted, which means pages containing
+phrase must be excluded.
+.IP "\fBis\fR=\fIsite_pattern\fR [\fIsite_pattern\fR ...]" 10
+Include sites. This parameter is used to restrict search by sites
+those names contains \fIsite_pattern\fR. If several patterns delimited
+by space are used, then they are ORed. Examples: \fBis\fR=\fIwww.google\fR,
+\fBis\fR=\fI.com\fR.
+.IP "\fBxs\fR=\fIsite_pattern\fR [\fIsite_pattern\fR ...]" 10
+Exclude sites. This parameter is used to to exclude sites those names
+contains \fIsite_pattern\fR from results. If several patterns delimited
+by space are used, then they are ORed.
+.IP \fBo\fR=\fInumber\fR 10
+Use "\fInumber\fR+1"th template sections if possible. See "Defining
+different output formats" subsection in \fBs.htm\fR(5).
+.SH ENVIRONMENT
+.IP \fBQUERY_STRING\fR 10
+This variable is usually set by web server and contains all the parameters
+for \fBs.cgi\fR described in OPTIONS above.
+.IP \fBASPSEEK_TEMPLATE\fR 10
+.IP \fBUDMSEARCH_TEMPLATE\fR 10
+Template file to use. Overridden by \fBtmpl\fR parameter. If both variables are
+used, \fBASPSEEK_TEMPLATE\fR is preferable.
+.IP \fBHTTP_COOKIE\fR 10
+Cookies can be sent by client browser together with request. Web server forms
+\fBHTTP_COOKIE\fR environment variable from it. \fBs.cgi\fR parses it and
+uses value of \fBPS\fR section as the number of results per page. This is
+overridden by \fBps\fR parameter.
+.IP \fBHTTP_HOST\fR 10
+Value is set by web server and is used together with self name to form
+HREF references to other result pages.
+.IP \fBSCRIPT_NAME\fR 10
+Value is set by web server and is used to determine the self name of the script
+and the name of template file to load (see description of \fBtmpl\fR parameter).
+.IP "\fBREDIRECT_STATUS\fR" 10
+.IP "\fBREDIRECT_URL\fR" 10
+.IP "\fBPATH_TRANSLATED\fR" 10
+These variables can possibly be set by web server (for example, by Apache
+using its "AddHandler" and "Action" directives).
+If \fBREDIRECT_STATUS\fR is set, \fBs.cgi\fR will get the self name from
+\fBREDIRECT_URL\fR, and template file name from \fBPATH_TRANSLATED\fR.
+.SH FILES
+\fB\f(CW@sysconfdir@/s.htm\fR
+.SH BUGS
+It appears that \fBtmpl\fR parameter is broken since version 1.2.8. Use
+either \fBASPSEEK_TEMPLATE\fR environment variable, or rename \fBs.cgi\fR.
+.SH NOTES
+When parameters are passed in URL, they should be encoded according to
+RFC 1738. If values are coming from form input fields, they are encoded
+by browser (so, for example, space character becomes either '+' or '%20').
+\fBs.cgi\fR does all appropriate decoding of parameter values and
+encoding of links to the other pages it generates whenever needed.
+In this page values are shown in non-encoded form.
+.SH SEE ALSO
+.BR s.htm (5),
+.BR searchd (1),
+.BR http://www.aspseek.org/.
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>
+and Alexander F. Avdonkin <al@asplinux.ru>.

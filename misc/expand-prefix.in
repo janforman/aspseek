@@ -1,0 +1,24 @@
+#!/bin/sh
+# $Id: expand-prefix.in,v 1.3 2002/05/20 11:42:42 kir Exp $
+# @configure_input@
+#
+# This scripts fixes inability of configure to expand macros that are
+# more than one level deep. Say, you want to put _at_localstatedir_at_
+# to your include file, but it will be expanded to _at_prefix_at_/var,
+# which is obviously not what you intended. So, run this script on
+# resulting include file to fix things. Alternative way is to add
+# -DLOCALSTATEDIR=_at_localstatedir_at_ to CFLAGS.
+# NOTE: _at_ means @ in above examples.
+#
+# If somebody knows a better way of doing this, please tell me about it.
+# Kir Kolyshkin <kir@asplinux.ru>
+
+
+while test $1; do
+	if sed -e 's!${exec_prefix}!@exec_prefix@!;s!${prefix}!@prefix@!' $1 >$1-tmp; then
+		mv -f $1-tmp $1;
+	else
+		exit 1;
+	fi
+	shift;
+done

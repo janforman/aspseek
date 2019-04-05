@@ -1,0 +1,64 @@
+#!/bin/sh
+# Startup script for ASPseek's search daemon
+# $Id: aspseek.in,v 1.6 2002/07/20 13:09:17 kir Exp $
+#
+# chkconfig: 345 95 05
+# description: ASPseek is an Internet search engine
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# This line is needed to cheat /etc/init.d/rc who expects action word
+
+[ -f @sbindir@/searchd ] || exit 0
+
+case "$1" in
+	start)
+		ret=0
+		# Check that database is where
+		if ! grep "$DBAddr" @sysconfdir@/db.conf > /dev/null 2>&1; then
+			# Need to create database
+			action $"Setting up database for ASPseek" @sbindir@/aspseek-mysql-postinstall
+			ret=$?
+		fi
+		if test $ret -eq 0; then
+			echo -n $"Starting ASPseek searchd: " 
+			daemon --user aspseek "@sbindir@/searchd -RD"
+			RETVAL=$?
+			echo
+		fi
+		;;
+	
+	stop)
+		if status index > /dev/null; then
+			echo -n $"Shutting down ASPseek index "
+			@sbindir@/index -E
+			echo
+		fi
+		if status searchd > /dev/null; then
+			echo -n $"Shutting down ASPseek searchd "
+			killproc searchd
+			RETVAL=$?
+			echo
+		fi
+		;;
+	
+	status)
+		status index
+		status searchd
+		RETVAL=$?
+		;;
+
+	restart)
+		$0 stop
+		$0 start
+		RETVAL=$?
+		;;
+	
+	*)
+		echo $"Usage: aspseek {start|stop|restart|status}"
+		exit 1
+
+esac
+
+exit $RETVAL

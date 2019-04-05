@@ -1,0 +1,224 @@
+#!/bin/bash
+# $Id: faq2html,v 1.3 2002/12/25 11:31:38 kir Exp $
+#
+# faq2html - extremely dirty hack to convert text-only FAQ document to html
+#
+# At the end of it all I understood that I'd better rewrite FAQ document
+# in some markup language (linuxdoc-sgml, DocBook, *roff, HTML etc.) and
+# export plain text file from it. But so far this cumbersome script is
+# written, and it more or less works, so let's leave it as is.
+#
+# NOTE to my ancestors: do not try to generate complex things from simple
+# things: it is much easier to do it otherwise. -- kir
+
+
+# Fool-proof checks
+if test $# -ne 1; then
+	echo "Usage: `basename $0` FAQ-file" 1>&2
+	exit 0
+fi
+INFILE=$1
+if ! test -f $INFILE; then
+	echo "ERROR: File $INFILE not found" 1>&2
+	exit 1
+fi
+if ! test -r $INFILE; then
+	echo "ERROR: Can't read file $INFILE"  1>&2
+	exit 1
+fi
+
+function print_toc()
+{
+	awk '
+BEGIN {
+	inq=0; qnum=0; q[0]="";
+}
+/^A:/ {
+	inq=0;
+}
+(inq==1) {
+	q[qnum]=q[qnum] "\n" $0;
+}
+/^Q:/ {
+	inq=1; qnum++;
+	q[qnum]=substr($0, 4);
+}
+END {
+	for(i=1; i<=qnum; i++) {
+		gsub("<", "\\&lt;", q[i]);
+		gsub(">", "\\&gt;", q[i]);
+		printf "<A HREF=#%d>%s</A>\n<P>\n", i, q[i];
+	}
+}'
+}
+
+function print_contents()
+{
+	awk '
+BEGIN	{anum=0; ina=0; inheader=1; inpre=0;}
+! /^    / && (inpre>0){
+	inpre=0;
+	if (ina)
+		print "</PRE>";
+	else
+		print "</TT>";
+	}
+/^Q:/	{
+	if (ina==1)
+		print "\n";
+	ina=0; inheader=0; qnum++;
+	printf "<H3>Question %d</H3>\n<P class=question>\n", qnum;
+	}
+/^A:/	{ina=1; printf "<P><A NAME=%d></A>\n<P class=answer>\n", qnum, qnum;}
+/^    /	{
+	inpre++;
+	if (inpre==1) {
+		if (ina)
+			print "<PRE>";
+		else
+			print "<TT>";
+	}
+	}
+/^.+$/ && (inheader==0)	{
+	gsub("<", "\\&lt;");
+	gsub(">", "\\&gt;");
+	if (inpre>0)
+		sub("^    ", "");
+	print;
+}
+'
+}
+
+# This changes <PRE> to <PRE CLASS="small" in places where lines
+# inside <PRE> is longer than 55 characters.
+# Parameters:
+#  $1 - file name
+function fix_pre()
+{
+	local file=$1
+	local lines=`awk '
+BEGIN	{ line=0; maxlen=0 }
+
+/^<PRE>$/ { line=FNR }
+
+/^<\/PRE>$/ {
+	if (maxlen>55)
+		print line;
+	line=0; maxlen=0
+}
+
+(line!=0) {
+	len=length($0);
+	if (len>maxlen)
+		maxlen=len;
+}
+' < $file`
+
+#	echo "Too long lines in $file are:" $lines
+	local l
+	local edcmd
+	for l in $lines; do
+		edcmd="${edcmd}${l}s/<PRE>/<PRE CLASS=\"small\">/\n"
+	done
+	edcmd="${edcmd}wq\n"
+	echo -e "$edcmd" | ed -s $file
+}
+
+function qa2img()
+{
+	sed -e 's/^Q://' -e 's/^A://'
+}
+
+function select_some_words()
+{
+
+	sed	-e 's# \(LD_LIBRARY_PATH\) # <tt>\1</tt> #' \
+		-e 's# \(libmysqlclient\.so\) # <tt>\1</tt> #' \
+		-e 's# \(libmysqlclient\.so\*\)# <tt>\1</tt>#' \
+		-e 's# \(/etc/ld\.so\.conf\) # <tt>\1</tt> #' \
+		-e 's# \(/etc/ld\.so\.conf\).# <tt>\1</tt>.#' \
+		-e 's# \(/home/mysql\)# <tt>\1</tt>#' \
+		-e 's# \(index -E\)# <tt>\1</tt>#' \
+		-e 's# \(index -D\)# <tt>\1</tt>#' \
+		-e 's#\([ (^]\)\(index\)\([., )]\)#\1<tt>\2</tt>\3#' \
+		-e 's#\(index -B\)#<tt>\1</tt>#' \
+		-e 's# \(-D\)\([ .,)]\)# <tt>\1</tt>\2#' \
+		-e 's#\(index -n &lt;num&gt;\)#<tt>\1</tt>#' \
+		-e 's#\(index\) \(should\)#<tt>\1</tt> \2#' \
+		-e 's#\(index\) \(first\)#<tt>\1</tt> \2#' \
+		-e 's# \(num\) # <tt>\1</tt> #' \
+		-e 's# \(-O key_buffer=xxxM\) # <tt>\1</tt> #' \
+		-e 's# \(safe_mysqld\) # <tt>\1</tt> #' \
+		-e 's# \(-N\)\([ .,)]\)# <tt>\1</tt>\2#' \
+		-e 's# \(xxx\) # <tt>\1</tt> #' \
+		-e 's# \(-R\) # <tt>\1</tt> #' \
+		-e 's#\(&lt;num&gt;\)#<tt>\1</tt>#g' \
+		-e 's#"\(Waiting for resolver\)"#"<tt>\1</tt>"#' \
+		-e 's#"\(Adding URL\)"#"<tt>\1</tt>"#' \
+		-e 's# \(CXXFLAGS\) # <tt>\1</tt> #' \
+		-e 's#\(make install-strip\)#<tt>\1</tt>#' \
+		-e 's#\(make install\)#<tt>\1</tt>#' \
+		-e 's#\(-g\) # <tt>\1</tt> #' \
+		-e 's# \(MinDelay\) # <tt>\1</tt> #' \
+		-e 's# \(s\.htm\) # <tt>\1</tt> #' \
+		-e 's# \(aspseek\.conf\) # <tt>\1</tt> #' \
+		-e 's#\(searchd\.conf\) #<tt>\1</tt> #' \
+		-e 's# \(charsets\.conf\) # <tt>\1</tt> #' \
+		-e 's#\(CharsetTable\)#<tt>\1</tt>#' \
+		-e 's#\(CharsetAlias\) #<tt>\1</tt> #' \
+		-e 's#\(LocalCharset\) #<tt>\1</tt> #' \
+		-e 's# \(StopwordsFile\) # <tt>\1</tt> #' \
+		-e 's# \(--enable-charset-guesser\)# <tt>\1</tt>#' \
+		-e 's#\(configure\)\([ ,.)"]\)#<tt>\1</tt>\2#' \
+		-e 's#\([^|]\) \(Max_data_length\) #\1 <tt>\2</tt> #' \
+		-e 's# \(AVG_ROW_LENGTH\) # <tt>\1</tt> #' \
+		-e 's#\(MAX_ROWS\) #<tt>\1</tt> #' \
+		-e 's# \(-a\) # <tt>\1</tt> #' \
+		-e 's#\(If-Modified-Since\) # <tt>\1</tt> #' \
+		-e 's# \(If-None-Match\) # <tt>\1</tt> #' \
+		-e 's#\(Last-Modified\) # <tt>\1</tt> #' \
+		-e 's# \(ETags\) # <tt>\1</tt> #' \
+		-e 's# \(Expires\) # <tt>\1</tt> #' \
+		-e 's# \(Period\)\([ .]\)# <tt>\1</tt>\2#' \
+		-e 's#"\(wordurl\.urls\)"#"<tt>\1</tt>"#' \
+		-e 's#"\(wordurl\.word_id\)"#"<tt>\1</tt>"#' \
+		-e 's# \(space_id\) # <tt>\1</tt> #' \
+		-e 's# \(index -B\) # <tt>\1</tt> #' \
+		-e 's# \(spN=on\) # <tt>\1</tt> #' \
+		-e 's# \(s\.cgi\) # <tt>\1</tt> #' \
+		-e 's# \(N\) # <tt>\1</tt> #' \
+		-e 's# \(spN\)\([ ,]\)# <tt>\1</tt>\2#' \
+		-e 's# \(off\),# <tt>\1</tt>,#' \
+		-e 's#\([ ("]\)\(searchd\)\([., "]\)#\1<tt>\2</tt>\3#' \
+		-e 's# \(Include ucharset\.conf\) # <tt>\1</tt> #' \
+		-e 's#\(ucharset\.conf\)# <tt>\1</tt> #' \
+		-e 's# \(iso-8859-1\) # <tt>\1</tt> #' \
+		-e 's# \(var/\) # <tt>\1</tt> #' \
+		-e 's# \(/total\) # <tt>\1</tt> #' \
+		-e 's# \(/subsets\) # <tt>\1</tt> #' \
+		-e 's# BUGS # <A HREF="http://cvs.aspseek.org/viewcvs/viewcvs.cgi/aspseek/BUGS?rev=HEAD\&content-type=text/vnd.viewcvs-markup">BUGS</A> #' | \
+	sed	-e 's#reverse <tt>index</tt>#reverse index#' \
+		-e 's|<tt>\(&lt;num&gt;</tt>\)</tt>|\1|'
+	
+}
+
+
+TMPF=`mktemp faq.XXXXXX` || exit 1
+trap "rm -f $TMPF" EXIT
+#echo "<HTML><HEAD><TITLE>Frequently asked questions</TITLE></HEAD>"
+#echo "<BODY>"
+echo "<?php	\$title='Frequently Asked Questions';
+	require('header.inc');
+?>
+<DIV id=main>
+<H2>Frequently Asked Questions</H2>
+" > $TMPF
+#print_toc < $INFILE
+print_contents < $INFILE | qa2img | select_some_words >> $TMPF
+#echo "</BODY></HTML>"
+echo "</DIV>
+<?php require('footer.inc'); ?>" >> $TMPF
+
+fix_pre $TMPF
+cat $TMPF
+rm -f $TMPF

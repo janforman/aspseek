@@ -1,0 +1,6 @@
+- Correct code to work under newer GCC
+
+Status:
+-	todo
+~	partially done
++	done

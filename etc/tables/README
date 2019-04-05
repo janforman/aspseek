@@ -1,0 +1,27 @@
+Format of unicode charset file
+------------------------------
+
+Each line of unicode charset file represents pair of small and capital
+characters. There are 4 hexadecimal numbers and optional comment in each line:
+
+1) code of small letter in charset
+2) code of small letter in unicode
+3) code of capital letter in charset
+4) code of capital letter in unicode
+
+If particular letter has no corresponding small/capital, then 2 codes
+of corresponding letter should be zero. Comment starts from # and lasts
+till the end of line.
+
+Format of unicode charset file for multibyte charsets
+-----------------------------------------------------
+
+Each line of unicode charset file for multibyte charsets represents code
+in charset and unicode value for character.
+There are 2 hexadecimal numbers and optional comment in each line:
+
+1) code of symbol in charset
+2) code of symbol in unicode
+
+Supplied files are built using Unicode mappings taken from
+http://www.unicode.org/Public/MAPPINGS/

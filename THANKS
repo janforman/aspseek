@@ -1,0 +1,48 @@
+We would like to thank developers of UdmSearch (now known as MnogoSearch)
+search engine (available at http://search.mnogo.ru/) and especially
+Alexander Barkov who started that project for the ideas and source code
+which we used in ASPseek.
+
+Also (in no particular order):
+
+* Andrej Filipcic <Andrej.Filipcic@ijs.si>
+for fixing log() bug in CRanks::LoadRanks()
+
+* "Thomas 'Balu' Walter" <tw@itreff.de>
+for pointing out some oddities in config files and docs
+
+* "Neil K" <neilk@alldas.de>
+for reporting security holes in s.cgi
+
+* Michael Dodwell <elmer@trellian.com>
+for pointing out and providing the fixes to a few small bugs
+
+* Markus Rietzler <suchmaschine@wuppertal-navigator.de>
+for implementing MaxDocsPerServer index option
+
+* John Capo <jc@irbs.com>
+for some FreeBSD-related fixes
+
+* Andre Pfeiler <nail@ndo.ath.cx>
+for contributing langmap for German language
+
+* Jan Karabina <karabina@penguin.cz>
+for providing Czech langmap and charsets, some small fixes
+
+* Massimo Miccoli <mmiccoli@iltrovatore.it>
+for providing Italian stopwords list
+
+* Sergey Kachanovsky <ranger@tversu.ru>
+for testing, bugreporting on AIX and Solaris
+
+* Jeff Watts <jeff.watts@ni.com>
+for implementing \N sequence in Replace from aspseek.conf
+
+* John Hansen <john@trellian.com>
+for reporting the bug with "index -a -f" and initial patch
+
+* Bui Quang Minh <minhbq@vnu.edu.vn>
+for discovering and fixing several bugs in UNICODE mode
+
+* Alexey Mahotkin <alexm@w-m.ru>
+for providing a fix to bug #34, -F option to searchd

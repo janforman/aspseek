@@ -1,0 +1,385 @@
+.\" $Id: aspseek-sql.5.ep.in,v 1.9 2003/01/13 11:31:02 kir Exp $
+.\" @configure_input@
+.TH aspseek-sql 5 "$Date: 2003/01/13 11:31:02 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+aspseek-sql - the structure of SQL database tables used by ASPseek
+.SH SQL TABLES
+.SS wordurl
+This table keeps information about each word in main and real-time database,
+one record per word.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+word	Word itself.
+word_id	Numeric ID of \fBword\fR.
+urls	T{
+Information about sites and urls, in which \fBword\fR is encountered.
+Empty if size of info is greater than 1000 bytes, in this case info is stored in separate file.
+.ad
+T}
+urlcount	Number of URLs in which \fBword\fR is encountered.
+totalcount	Total count of this \fBword\fR in all URLs.
+.TE
+.sp 1
+Last 3 fields are used only if \fBCompactStorage\fR is set to \fIno\fR, and
+updated after finishing of crawling, or then \fBindex\fR(1)
+is run with \fB-D\fR option.
+.SS wordurl1
+This table keeps all information about each word in real-time database,
+one record per word.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+word	Word itself.
+word_id	Numeric ID of \fBword\fR, refers to \fBwordurl.word\fR.
+urls	T{
+Information about sites and urls in which \fBword\fR is encountered.
+Always not empty regardless of size.
+.ad
+T}
+urlcount	Number of URLs in which \fBword\fR is encountered.
+totalcount	Total count of this \fBword\fR in all URLs.
+.TE
+.sp 1
+Last 3 fields are updated immediately after downloading of the URL by
+\fBindex\fR(1) when it is run with \fB-T\fR option.
+.SS urlword
+This table keeps information about all encountered URLs, both indexed
+and not indexed yet which match specified conditions in configuration files.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+url_id	ID of URL.
+site_id	ID of site, refers to \fBsites.site_id\fR.
+deleted	T{
+Set to 1 if server returned 404 error and \fBDeleteBad\fR is set
+to \fIyes\fR, or if \fBrobots.txt\fR or configuration rules disallow
+to index this URL.
+T}
+url	URL itself.
+next_index_time	T{
+Time of next indexing in seconds from UNIX epoch.
+.ad
+T}
+status	T{
+HTTP status returned by server or 0 if document has not been indexed yet.
+.ad
+T}
+crc	MD5 checksum of document.
+last_modified	T{
+"Last-Modified" HTTP header returned by HTTP server.
+T}
+etag	"ETag" header returned by HTTP server.
+last_index_time	T{
+Time of last indexing in seconds from UNIX epoch.
+.ad
+T}
+referrer	ID of URL which first referred this URL.
+tag	Arbitrary tag.
+hops	Depth of URL in hyperlink tree.
+redir	T{
+URL ID, where current URL is redirected or 0 if this URL is not redirected.
+T}
+origin	T{
+URL ID of document which is origin of this cloned document, or zero if
+this is not clone.
+T}
+.TE
+.SS urlwords\fINN\fR (where \fINN\fR is 2-digit number from 00-15)
+These tables contain additional info about existing indexed URLs.
+Number \fINN\fR in table name is URL_ID mod 16.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+deleted	T{
+Set to 1 if server returned 404 error and \fBDeleteBad\fR is set
+to \fIyes\fR, or if \fBrobots.txt\fR or configuration rules disallow
+to index this URL.
+T}
+wordcount	T{
+Count of unique words in the indexed part of URL.
+T}
+totalcount	T{
+Total count of words in the indexed part of URL.
+T}
+content_type	T{
+Content-Type HTTP header returned by server.
+T}
+charset	T{
+Document charset taken from \fBContent-Type\fR HTTP header or META.
+T}
+title	First 128 characters from pages title.
+txt	T{
+First 255 characters from page body, stripped from HTML tags.
+T}
+docsize	Total size of URL.
+keywords	First 255 characters from page keywords.
+description	T{
+First 100 characters from page description.
+.ad
+T}
+lang	Not used now.
+words	Zipped content of URL.
+hrefs	T{
+Sorted array of outgoing href IDs from this URL.
+T}
+.TE
+.SS robots
+This table contains information parsed from robots.txt file for each site.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+hostinfo	Host name.
+path	Path to exclude from indexing.
+.TE
+.SS sites
+This table contains IDs for all found sites.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+site_id	ID of site.
+site	T{
+Site name with protocol, like \f(CWhttp://www.my.com/\fR.
+T}
+.TE
+.SS stat
+This table contains information about query statistics for each completed query.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+addr	T{
+IP address of computer, from which query was requested.
+.ad
+T}
+proxy	T{
+IP address of proxy server, through which query was requested.
+.ad
+T}
+query	Query string.
+ul	URL limit used to restrict the query.
+sp	Web spaces used to restrict the query.
+site	Site ID used to restrict the query.
+np	Results page number requested.
+ps	Results per page.
+sites	Number of found sites matching query.
+urls	Number of found URLs matching query.
+start	T{
+Query processing start in seconds from UNIX epoch.
+.ad
+T}
+finish	T{
+Query processing finish in seconds from UNIX epoch.
+.ad
+T}
+referer	T{
+URL of web page from which query was requested.
+.ad
+T}
+.TE
+.SS subsets
+Table describing all subsets, which can be used to restrict the search.
+Populated manually with URL masks. Subset is the set of URLs from
+the particular directory of site. Putting masks describing whole site
+is not necessary.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+subset_id	ID of subset.
+mask	T{
+URL mask. Example:
+.nh
+\fIhttp://www.my.com/dir/%\fR.
+.hy
+Examples of wrong use:
+.nh
+\fIhttp://www.aspstreet.com/%\fR, \fIhttp://www.aspstreet/%\fR.
+.hy
+T}
+.TE
+.SS spaces
+Table describing web spaces. Web space is the set of sites.
+Each site belonging to particular space must be put into separate record.
+Populated manually or using \fB-A\fR option of \fBindex\fR. If populated
+manually, run \fBindex -B\fR after changing this table.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+space_id	ID of web space.
+site_id	T{
+ID of site belonging to the space, refers to sites.site_id.
+.ad
+T}
+.TE
+.SS tmpurl
+Table describing URLs indexed since start of last indexing. Used for debugging.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+url_id	URL ID.
+thread	Ordinal thread number, which indexed URL.
+.TE
+.SS wordsite
+Auxiliary table used when search is restricted to site pattern.
+Built at the end of indexing from \fBsites\fR table.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+word	Word used in site name between dots.
+sites	T{
+Array of site IDs, where this word is encountered.
+T}
+.TE
+.SS citation
+This table contains reverse index of hyperlinks. It is used only if
+\fBIncrementalCitations\fR is set to \fIno\fR.
+.TS
+expand allbox center;
+lB lB
+lI l.
+Field	Description
+_
+url_id	URL ID.
+referrers	T{
+Array of URL IDs, which have hyperlink to this URL.
+T}
+.TE
+.\" FIXME put countries, cache tables description here
+.SH BLOBS
+.SS wordurl.urls, wordurl1.urls
+.TS
+expand allbox center;
+lB s s
+lB lB lB
+n n l.
+Sites information, ordered by \fBsite_id\fR.
+Offset	Length	Description
+_
+0	4	Offset of URL info for 1st site.
+4	4	T{
+ID of 1st site where \fBword\fR is encountered.
+T}
+8	4	Offset of URL info for 2nd site.
+12	4	T{
+ID of 2nd site where \fBword\fR is encountered.
+T}
+.T&
+c s s.
+\ ...
+.T&
+n n l.
+(N-1)*8	4	T{
+Offset of URL info for Nth site, where N is the total number of sites in which
+\fBword\fR is encountered.
+.ad
+T}
+(N-1)*8+4	4	Offset of URL info for Nth site.
+(N-1)*8+8	4	T{
+Offset of URL info end for Nth site. Must point to the end of blob or file.
+T}
+.T&
+lB s s
+lB lB lB
+n n l.
+T{
+URLs information. Follows sites information immediately. Offsets are counted from 0.
+T}
+Offset	Length	Description
+_
+0	4	T{
+URL ID of first site in sites info section.
+T}
+4	2	Word count in this URL.
+6	2	First position.
+8	2	Second position.
+.T&
+c s s.
+\ ...
+.T&
+n n l.
+6+(N-1)*2	2	T{
+Nth position, where N is the total word count in the URL.
+T}
+.T&
+c s s.
+T{
+\fIRepeated with info for URLs from the same site,
+with ID greater than previous.\fR
+T}
+\ ...
+T{
+\fIRepeated with info for URLs for next sites from sites info section.\fR
+T}
+.TE
+.SS urlwordsNN.words
+This field contains gzipped content of URL.
+.TS
+expand allbox center;
+lB lB lB
+n n l.
+Offset	Length	Description
+_
+0	4	T{
+Size of URL content before zipping or 0xFFFFFFFF if content is not zipped.
+.ad
+T}
+4	Zipped size	Zipped or original URL content.
+.TE
+.SS wordsite.sites
+This field contains array of sites/positions for word. Sorted by site IDs.
+.PP
+Structure of array element:
+.TS
+expand allbox center;
+lB lB
+n l.
+Bits	Description
+_
+24-31	T{
+Bitmap of positions, highest bit is set to 1 is word is first-level domain.
+T}
+0-23	Site ID.
+.TE
+.SH FILES
+\f(CW@sysconfdir@/\fIDBType\fR\f(CW/tables.sql\fR
+.SH SEE ALSO
+.BR aspseek (7),
+.BR index (1),
+.BR searchd (1).
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>
+and Alexander F. Avdonkin <al@asplinux.ru>.

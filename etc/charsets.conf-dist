@@ -1,0 +1,90 @@
+# charsets.conf is included by aspseek.conf, searchd.conf and s.htm.
+#
+# ** Please keep the original charsets.conf-dist file for future reference.
+#
+# Uncomment all needed charsets below.
+# Don't forget to put the right LocalCharset if you are not us-ascii.
+
+
+########################################################################
+#Charset definition (please uncomment all needed charsets):
+#CharsetTable <charset> <lang> <table> [<lang_map>]
+#
+## (Unix) Cyrillic
+#CharsetTable koi8r     ru charsets/koi8r	langmap/russian-koi8r.lm
+#
+## (Windows) Cyrillic
+#CharsetTable cp1251    ru charsets/cp1251	langmap/russian-cp1251.lm
+#
+## (DOS) Cyrillic
+#CharsetTable cp866     ru charsets/cp866	langmap/russian-cp866.lm
+#
+## ISO Cyrillic
+#CharsetTable iso88595  ru charsets/iso88595	langmap/russian-iso88595.lm
+#
+## Mac Cyrillic
+#CharsetTable mac	ru charsets/mac
+#
+## Latin 1; Western European Languages
+#CharsetTable iso88591	en charsets/iso88591
+#
+## Central Europe: Czech
+#CharsetTable iso88592	cz charsets/iso88592
+#
+## MS Central Europe: Czech
+#CharsetTable cp1250	cz charsets/cp1250
+#
+## ISO Baltic
+#CharsetTable iso88594	xx charsets/iso88594
+#CharsetTable iso885913 xx charsets/iso885913
+#
+## ISO Greek
+#CharsetTable iso88597	gr charsets/iso88597
+#
+## MS Greek
+#CharsetTable cp1253	gr charsets/cp1253
+#
+## ISO Turkish
+#CharsetTable iso88599	tr charsets/iso88599
+
+
+
+########################################################################
+#Charset alias definition:
+#CharsetAlias <charset> <alias_1>...<alias_N>
+#
+#CharsetAlias koi8r      koi8-r koi-8-r koi8r koi-8 koi8 koi
+#CharsetAlias cp1251     windows-1251 cp-1251 cp1251 windows1251 x-cp1251
+#CharsetAlias cp866      cp-866 cp866 csibm866 866 ibm866 x-cp866 x-ibm866 alt
+#CharsetAlias iso88595   iso-8859-5 iso8859-5 iso8859.5 iso-8859.5 iso_8859-5 iso_8859-5:1988 iso-ir-144 cyrillic iso
+#CharsetAlias mac        x-mac-cyrillic
+#
+#CharsetAlias iso88591   iso-8859-1 iso8859-1 iso8859.1 iso-8859.1 iso_8859-1:1988 iso_8859-1 iso_8859.1
+#CharsetAlias iso88592   iso-8859-2 iso8859-2 iso8859.2 iso-8859.2 iso_8859-2:1988 iso_8859-2 iso_8859.2 latin2
+#CharsetAlias iso88594   iso-8859-4 iso8859-4 iso8859.4 iso-8859.4 iso_8859-4 iso_8859.4 8859-4 latin4
+#CharsetAlias iso88597   iso-8859-7 iso8859-7 iso8859.7 iso-8859.7 iso_8859-7:1987 iso_8859-7 iso_8859.7
+#CharsetAlias iso88599   iso-8859-9 iso8859-9 iso8859.9 iso-8859.9 iso_8859-9 iso_8859.9 8859-9 latin5
+#CharsetAlias iso885913  iso-8859-13 iso8859-13 iso8859.13 iso-8859.13 iso_8859-13 iso_8859.13 8859-13 latin7
+#CharsetAlias cp1250     windows-1250 cp-1250 cp1250 windows1250 x-cp1250 1250
+#CharsetAlias cp1253     windows-1253 cp1253 windows1253 x-cp1253 cp-1253
+
+# ózech charsets (contributed by Jan Karabina <karabina@penguin.cz>)
+#
+#CharsetAlias iso88592	iso-8859-2 iso8859-2 iso8859.2 iso-8859.2 iso_8859-2:1988 iso_8859-2 iso_8859.2 latin2
+#CharsetAlias cp1250	windows-1250 cp-1250 cp1250 windows1250 x-cp1250 1250
+#CharsetAlias keybcs2	cp895 mjk kamenicti kam
+#CharsetAlias cp852	ibm852 pc-latin2 pc-l2 pc2 852 csibm852 x-cp852 x-cp852 x-ibm852
+#warning: koi8 koi-8 conflicts with ru koi8r charset aliases
+#CharsetAlias koi8cs	koi8-cs koi-8-cs koi8 koi x-kam-cs x-kamcs cp867 cp869 koi8 koi-8
+#CharsetAlias macce	mac-ce apple-ce applece x-mac-ce x-macce x-apple-ce x-applece maclatin2 cp10029_maclatin2
+
+
+
+#######################################################################
+# LocalCharset <charset>
+# Defines charset of local file system. It is required if you are using
+# 8 bit charsets and does not matter for 7 bit charsets.
+# This command should be used once and takes global effect for the config file.
+# You should use ONLY charset that is defined above in CharsetTable
+#
+#LocalCharset koi8r

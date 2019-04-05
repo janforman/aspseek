@@ -1,0 +1,22 @@
+	How to report bugs
+	==================
+
+Point your browser to http://bugzilla.aspseek.org/ and follow "Enter a new
+bug report" link. Register if you have not done it yet.
+
+While filling in the bug report form, do not forget to choose a version
+of ASPseek and an appropriate component.
+
+Please provide all necessary information in the bug description. Just
+telling "I can't use your program" or "index dumps core" is not enough.
+
+Check that you have included at least:
+
+* operating system name and version;
+* versions of C++ compiler, standard libraries, make utility, SQL server;
+* some notes about SQL server configuration if it differs from default;
+* appropriate configuration files or relevant fragments;
+* URLs which you've tried to index if it is accessible from Internet,
+  or some idea of what data do you have there if it's in your local intranet;
+* some hardware details, like CPU, memory, disks information - all that affects
+  speed and portability.

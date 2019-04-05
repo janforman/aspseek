@@ -1,0 +1,183 @@
+# This is default configuration file for ASPseek 1.2 search daemon (searchd)
+# See man pages searchd.conf(5) and searchd(1) for details.
+#
+# Please keep the searchd.conf-dist for future reference,
+# and edit searchd.conf.
+#
+# Lines starting with # are comments
+
+############################################################################
+# DBaddr is used by search daemon (searchd) to connect to database.
+# Format is:
+#    DBAddr <DBType>:[//[DBUser[:DBPass]@]DBHost[:DBPort]]/DBName/
+#
+DBAddr  mysql://foo:bar@localhost/aspseek/
+#DBAddr  oracle8://foo:bar@localhost/aspseek/
+
+# Alternatively, you can put DBAddr in a separate file.
+#Include db.conf
+
+
+############################################################################
+# Port is used to specifying the port that searchd should listen
+# for queries. Only one port can be specified. Default is 12345.
+#Port 12345
+
+############################################################################
+# AllowFrom is used to limit access for searchd clients (s.cgi)
+# Argument can be hostname, IP address, or address/mask (in CIDR form)
+# In latter case the access is allowed to whole network.
+# Can be used multiple times.
+# If there is no AllowFrom, access is unlimited.
+# Examples:
+#AllowFrom 194.34.56.78
+#AllowFrom 10.20.30.40/24
+#AllowFrom host.domain.com
+AllowFrom 127.0.0.1
+
+############################################################################
+# DataDir is the root directory for delta files and files
+# with information about words, subsets, spaces. Defaults to
+# var directory under ASPseek installation.
+#
+#DataDir @localstatedir@
+
+
+############################################################################
+# Debug level for searchd (none, error, warning, info, debug)
+# Default value is info
+#DebugLevel warning
+
+############################################################################
+# Minimal length of fixed part of word with pattern (like someth*)
+# Words shorter than this value will be rejected with approrpiate error
+# message (ER_TOOSHORT, which is defined in s.htm).
+# Defining the value to less than 3 can open ASPseek to DoS attacks.
+# It is not a bad idea to fix the ER_TOOSHORT message in s.htm telling user
+# what is the limit.
+# Default value is 6.
+#MinFixedPatternLength 6
+
+############################################################################
+# Use separate connection to the database for each thread
+# Used for better concurrency among threads, especially when one or more
+# of threads perform pattern search and the other is trying to perform
+# simple search
+# Default value is "yes".
+#MultipleDBConnections no
+
+############################################################################
+# Byte ordering in unicode version (see description in aspseek.conf)
+# MUST be set to the same value as in aspseek.conf.
+# Default value is "no" (low byte first).
+#HiByteFirst yes
+
+
+############################################################################
+# Incremental citaions (see description in aspseek.conf)
+# MUST be set to the same value as in aspseek.conf.
+# Default value is "yes".
+#IncrementalCitations no
+
+############################################################################
+# Reverse index storage mode
+# The same value MUST be set in aspseek.conf.
+# Defalut value is "yes".
+#CompactStorage no
+
+############################################################################
+# UTF8 storage mode
+# This parameter has a sense only in unicode version and only for MySQL backend.
+# In UTF8 storage mode fields wordurl[1].word are stored in UTF8 encoding.
+# This mode can reduce sizes of data and index files for "wordurl" table.
+# To convert existing unicode database to this mode run "index -b".
+# The same value MUST be set in aspseek.conf.
+# Default value is "no"
+#
+UtfStorage yes
+
+############################################################################
+# MaxThreads <N>
+# Maximum threads that search daemon can run simultaneously.
+# Setting high value can result in big memory consumption.
+# Setting low value can result in big response time for queries
+# in high load conditions.
+# Default value is 10
+#MaxThreads 20
+
+
+############################################################################
+# Include <filename>
+# Include another configuration file.
+# Absolute path if <filename> starts with "/":
+# Examples:
+#Include /usr/local/aspseek/etc/inc1.conf
+#Include inc1.conf
+
+
+############################################################################
+# SiteWeight <site> <N>
+# SiteWeight specifies priority for particular site
+# Default priority for all is 0. If priority of site is greater than 0,
+# then it will always be displayed before all results.
+# If prioriity of of site is less than 0, then it will always be
+# displayed after all results.
+#SiteWeight http://www.aspstreet.com 100
+#SiteWeight http://www.searchasp.com -100
+
+
+############################################################################
+# WordForms on | off | lang[,lang[,...]]
+# WordForms tells searchd whether to search word forms by default.
+# Value can be on, off or comma-separated list of allowed languages.
+# It is overriden by "fm=" parameter to s.cgi.
+# Default is "off"
+#WordForms en,ru
+#WordForms on
+
+
+############################################################################
+# Ispell support commands.
+# Load ispell affix file:
+#Affix <lang> <ispell affixes file name> [<charset>]
+# Load ispell dictionary file
+#Spell <lang> <ispell dictionary file name> [<charset>]
+# File names are relative to ASPseek /etc directory
+# Absolute paths can be also specified.
+# If <charset> is not specified, the value of LocalCharset is used
+#
+#Affix en en.aff
+#Spell en en.dict
+
+
+############################################################################
+# AccountDistance tells "searchd" whether to take into account distance
+# from the beginning of title/keywords/description to search terms for
+# ranking. If this parameter is on, then documents with search terms closer
+# to the beginning of section have higher priority over others, otherwise
+# distance doesn't matter. Can be overriden by "ad" parameter of s.cgi.
+# Default is "on".
+#
+# AccountDistance off
+
+
+# Charsets configuration
+Include charsets.conf
+
+# Unicode charsets configuration
+Include ucharset.conf
+
+# Stopwords configuration
+Include stopwords.conf
+
+############################################################################
+# This will enable cache of results, so answers to subsequent queries
+# will not searched for in the database, but returned from cache.
+# WARNING: this is experimental feature, and it is turned off by default.
+Cache on
+
+# This is size of cache, in entries.
+CacheLocalSize  100
+
+# This is number of URLs in each entry.
+CachedUrls      200

@@ -1,0 +1,64 @@
+########################################################################
+# Unicode charset definition (please comment all not needed charsets):
+# CharsetTableU1 <charset> <lang> <table> [<lang_map>]
+#
+CharsetTableU1 windows-1250 ru tables/windows-1250.txt
+CharsetTableU1 windows-1251 ru tables/windows-1251.txt
+CharsetTableU1 windows-1252 ru tables/windows-1252.txt
+CharsetTableU1 windows-1253 ru tables/windows-1253.txt
+CharsetTableU1 windows-1254 ru tables/windows-1254.txt
+CharsetTableU1 windows-1255 ru tables/windows-1255.txt
+CharsetTableU1 windows-1256 ru tables/windows-1256.txt
+CharsetTableU1 windows-1257 ru tables/windows-1257.txt
+CharsetTableU1 windows-1258 ru tables/windows-1258.txt
+CharsetTableU1 windows-874 ru tables/windows-874.txt
+CharsetTableU1 iso-8859-1 ru tables/iso8859-1.txt
+CharsetTableU1 iso-8859-2 ru tables/iso8859-2.txt
+CharsetTableU1 iso-8859-3 ru tables/iso8859-3.txt
+CharsetTableU1 iso-8859-4 ru tables/iso8859-4.txt
+CharsetTableU1 iso-8859-5 ru tables/iso8859-5.txt
+CharsetTableU1 iso-8859-6 ru tables/iso8859-6.txt
+CharsetTableU1 iso-8859-7 ru tables/iso8859-7.txt
+CharsetTableU1 iso-8859-8 ru tables/iso8859-8.txt
+CharsetTableU1 iso-8859-9 ru tables/iso8859-9.txt
+CharsetTableU1 iso-8859-10 ru tables/iso8859-10.txt
+CharsetTableU1 iso-8859-13 ru tables/iso8859-13.txt
+CharsetTableU1 iso-8859-14 ru tables/iso8859-14.txt
+CharsetTableU1 iso-8859-15 ru tables/iso8859-15.txt
+CharsetTableU1 koi8-r ru tables/koi8r.txt
+CharsetTableU1 koi8-u ru tables/koi8u.txt
+
+########################################################################
+#Charset alias definition:
+#CharsetAlias <charset> <alias_1>...<alias_N>
+#
+CharsetAlias koi8-r		koi-8-r koi8r koi-8 koi8 koi
+CharsetAlias windows-1251	cp-1251 cp1251 windows1251 x-cp1251
+
+CharsetAlias iso-8859-1   iso88591 iso8859-1 iso8859.1 iso-8859.1 iso_8859-1:1988 iso_8859-1 iso_8859.1
+CharsetAlias iso-8859-2   iso88592 iso8859-2 iso8859.2 iso-8859.2 iso_8859-2:1988 iso_8859-2 iso_8859.2 latin2
+CharsetAlias iso-8859-3   iso88593 iso8859-3 iso8859.3 iso-8859.3 iso_8859-3:1988 iso_8859-3 iso_8859.3 latin3
+CharsetAlias iso-8859-4   iso88594 iso8859-4 iso8859.4 iso-8859.4 iso_8859-4 iso_8859.4 8859-4 latin4
+CharsetAlias iso-8859-5   iso88595 iso8859-5 iso8859.5 iso-8859.5 iso_8859-5 iso_8859-5:1988 iso-ir-144 cyrillic iso
+CharsetAlias iso-8859-6   iso88596 iso8859-6 iso8859.6 iso-8859.6 iso_8859-6 iso_8859.6 8859-6 latin6
+CharsetAlias iso-8859-7   iso88597 iso8859-7 iso8859.7 iso-8859.7 iso_8859-7:1987 iso_8859-7 iso_8859.7
+CharsetAlias iso-8859-9   iso88599 iso8859-9 iso8859.9 iso-8859.9 iso_8859-9 iso_8859.9 8859-9 latin5
+CharsetAlias iso-8859-13  iso885913 iso8859-13 iso8859.13 iso-8859.13 iso_8859-13 iso_8859.13 8859-13 latin7
+CharsetAlias windows-1250 cp-1250 cp1250 windows1250 x-cp1250 1250 cp-1250
+CharsetAlias windows-1253 cp-1250 cp1253 windows1253 x-cp1253 1253 cp-1253
+
+########################################################################
+# Unicode charset definition for multibyte charsets
+# (please comment all not needed charsets):
+# CharsetTableU2 <charset> <lang> <table> [<lang_map>]
+#
+CharsetTableU2 big5 ch tables/big5.txt
+CharsetTableU2 gb2312 ch tables/gb2312.txt
+
+########################################################################
+# Dictionary for tokenizing of text in Chinese, Japanese and Korean languages
+# Dictionary2 <lang> <file> [<file encoding>]
+# If file encoding is omitted, then file is assumed to be in unicode
+# Must be set after encoding definition (CharsetTableU2)
+# <lang> parameter must match <lang> in CharsetTableU2 directive.
+Dictionary2 ch tables/chinese.txt big5

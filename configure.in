@@ -1,0 +1,912 @@
+dnl $Id: configure.in,v 1.114 2004/10/21 02:56:29 mattsull Exp $
+
+AC_INIT(src/index.cpp)
+AC_CONFIG_AUX_DIR(misc)
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE(aspseek, 1.2.15)
+AM_CONFIG_HEADER(include/aspseek-cfg.h)
+AC_PROG_MAKE_SET
+
+AH_TOP([#ifndef _ASPSEEK_CFG_H_
+#define _ASPSEEK_CFG_H_])
+AH_BOTTOM([#endif /* _ASPSEEK_CFG_H_ */])
+
+dnl Installation prefix by default
+AC_PREFIX_DEFAULT(/usr/local/aspseek)
+
+if test "`pwd`" = "$ac_default_prefix" ; then
+	AC_ERROR([
+** You can not build the package in $ac_default_prefix directory.
+** This is target installation directory. Please untar the sources
+** to some other directory, for example /usr/src or $HOME/src
+]);
+fi
+
+dnl Check if build env is sane
+AM_SANITY_CHECK
+
+dnl Check for programs.
+
+AC_EXEEXT
+dnl This is C++ package! --kir.
+AC_LANG_CPLUSPLUS
+AC_PROG_CC
+AC_PROG_CXX
+
+dnl LibTool stuff
+AC_LIBTOOL_DLOPEN
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+AC_PROG_INSTALL
+dnl AC_PATH_PROG(MYSQL, mysql, $PATH:/usr/local/bin:/usr/local/mysql/bin)
+
+dnl Static library staff
+AC_PROG_LIBTOOL
+
+dnl This was taken from licq-1.0 src and modified by kir
+dnl Set up some operating system specific options
+case "$host" in
+	*-*-openbsd*)
+		CXXFLAGS="$CXXFLAGS -D_REENTRANT -pthread"
+		CFLAGS="$CFLAGS -D_REENTRANT -pthread"
+		COMMON_LIBS="$COMMON_LIBS -ldl"
+		echo "setting OpenBSD compilation options"
+		;;
+	*-*-freebsd*)
+		CXXFLAGS="$CXXFLAGS -D_THREAD_SAFE -pthread -D_PTHREADS"
+		CFLAGS="$CFLAGS -D_THREAD_SAFE -pthread -D_PTHREADS"
+		echo "setting FreeBSD compilation options"
+		;;
+	*-*-solaris*)
+		CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -DUSE_SOLARIS"
+		CFLAGS="$CFLAGS -D_REENTRANT -D_POSIX_PTHREAD_SEMANTICS -DUSE_SOLARIS"
+		LIBS="$LIBS -lpthread -lposix4"
+		COMMON_LIBS="$COMMON_LIBS -ldl"
+		echo "setting Solaris compilation options"
+		;;
+	*-*-linux*)
+ 		CXXFLAGS="$CXXFLAGS -O -pipe -fforce-addr -fexpensive-optimizations -ffast-math -fno-strict-aliasing -fpermissive -fomit-frame-pointer -fno-inline -D_REENTRANT"
+		CFLAGS="$CFLAGS -O -D_REENTRANT"
+		LIBS="$LIBS -lpthread"
+		COMMON_LIBS="$COMMON_LIBS -ldl"
+		echo "setting Linux compilation options"
+		;;
+	*-*-aix*)
+		CXXFLAGS="$CXXFLAGS -D_THREAD_SAFE"
+		CFLAGS="$CFLAGS -D_THREAD_SAFE"
+		LIBS="$LIBS -lc_r -lpthreads"
+		COMMON_LIBS="$COMMON_LIBS -ldl"
+		echo "setting AIX compilation options"
+		;;
+	*)
+		echo "** WARNING: you may need to provide some additional CXXFLAGS for pthreads to work."
+		;;
+esac
+
+dnl Check for header files.
+AC_HEADER_STDC
+AC_HEADER_DIRENT
+AC_CHECK_HEADERS(arpa/inet.h fcntl.h netdb.h netinet/in.h pthread.h \
+  regex.h resolv.h sys/file.h sys/socket.h sys/stat.h sys/time.h \
+  sys/types.h sys/utsname.h sys/wait.h unistd.h)
+
+dnl Check for STL headers
+AC_CHECK_HEADERS(algorithm vector string map,, \
+ AC_MSG_ERROR([** ERROR: Your system lacks some needed STL header files.]))
+
+dnl --- Check for STL extended headers (needed for include/*hash*.in)
+sinclude(misc/stl-ext.m4)
+SW_STL_EXT_INCLUDEDIR
+SW_STL_EXT_NAMESPACE
+AC_SUBST(STL_EXT_INCLUDEDIR)
+AC_SUBST(STL_EXT_NAMESPACE)
+
+dnl Check for typedefs, structures, and compiler characteristics.
+
+AC_CHECK_SIZEOF(char)
+AC_CHECK_SIZEOF(short int)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long int)
+AC_CHECK_SIZEOF(void *)
+
+# Check if we have socklen_t
+AC_CACHE_CHECK([for socklen_t], aseek_cv_have_socklen_t,
+AC_TRY_COMPILE(
+[#include <sys/types.h>
+#include <sys/socket.h>],
+[socklen_t s;],
+aseek_cv_have_socklen_t=yes, aseek_cv_have_socklen_t=no))
+
+if test "$aseek_cv_have_socklen_t" = "yes"
+then
+  AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if you have socklen_t type.])
+fi
+
+dnl Check if we are little or big endian
+dnl I can't remove warning produced by this check since it's not my code --kir.
+AC_C_BIGENDIAN
+
+dnl Check for library functions
+AC_CHECK_FUNCS(regcomp socket strdup strstr vsnprintf flock fcntl getpagesize)
+
+dnl Get the page size and page shift
+ASP_TEMPFILE=`mktemp psizeXXXXXX 2>/dev/null`
+if test "x$ASP_TEMPFILE" = "x"; then
+	ASP_TEMPFILE="psizeTEMPf"
+	# create the file just in case
+	echo > $ASP_TEMPFILE
+fi
+AC_TRY_RUN([
+#include <stdio.h>
+#include <unistd.h>
+int main(void){
+long ps = -1;
+int sh = 0;
+FILE *f;
+#ifdef HAVE_GETPAGESIZE
+ps = getpagesize();
+#else
+#ifdef _SC_PAGESIZE
+ps = sysconf(_SC_PAGESIZE);
+#endif /* _SC_PAGESIZE */
+#endif /* HAVE_GETPAGESIZE */
+if (ps <= 0) return 0;
+while (((1 << ++sh) != ps) && (sh <= 33));
+if (sh == 33) return 0;
+f = fopen("$ASP_TEMPFILE", "w");
+if (f == NULL) return 0;
+fprintf(f, "PAGE_SIZE=%ld\nPAGE_SHIFT=%d\n", ps, sh);
+fclose(f);
+return 0;
+}
+],
+# read PAGE_SIZE and PAGE_SHIFT from this file
+. ./$ASP_TEMPFILE
+rm -f $ASP_TEMPFILE
+,
+# Set some safe defaults
+PAGE_SIZE=65536
+PAGE_SHIFT=32
+,
+# Cross-compiling - set some safe defaults
+PAGE_SIZE=65536
+PAGE_SHIFT=32
+)
+
+AC_DEFINE_UNQUOTED(MEM_PAGE_SIZE, $PAGE_SIZE, \
+	[Size of memory page for this system.])
+AC_DEFINE_UNQUOTED(MEM_PAGE_SHIFT, $PAGE_SHIFT, \
+	[Bit shift needed so that (1 << PAGE_SHIFT) == PAGE_SIZE.])
+
+
+dnl Check for libraries
+sinclude(misc/net.m4)
+AC_LIBRARY_NET
+
+AC_CHECK_FUNC(compress, , AC_CHECK_LIB(z, compress, COMMON_LIBS="$COMMON_LIBS -lz",
+AC_ERROR([
+** ERROR: compress() not found. Please install libz and re-run ./configure
+])))
+
+AC_CHECK_FUNC(gethostbyname_r,
+[ # Check definition of gethostbyname_r
+AC_DEFINE(HAVE_GETHOSTBYNAME_R, 1, \
+	[Define if you have gethostbyname_r function.])
+ac_save_CXXFLAGS="$CXXFLAGS"
+AC_CACHE_CHECK([style of gethostbyname_r], aseek_cv_gethostname_style,
+CXXFLAGS="$CXXFLAGS -Werror"
+AC_TRY_COMPILE(
+[#include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>],
+[int skr;
+
+ skr = gethostbyname_r((const char *) 0,
+  (struct hostent*) 0, (char*) 0, 0, (struct hostent **) 0, &skr);
+],
+aseek_cv_gethostname_style=glibc2, aseek_cv_gethostname_style=other))
+if test "$aseek_cv_gethostname_style" = "glibc2"; then
+	AC_DEFINE(HAVE_GLIBC2_STYLE_GETHOSTBYNAME_R, 1, \
+		[Define if you have glibc2 style gethostbyname_r.])
+fi
+
+# Check 3rd argument of getthostbyname_r
+AC_CACHE_CHECK([third argument to gethostname_r routines], aseek_cv_gethostname_arg,
+AC_TRY_COMPILE(
+[#include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>],
+[int skr;
+
+ skr = gethostbyname_r((const char *) 0, (struct hostent*) 0, (hostent_data*) 0);],
+aseek_cv_gethostname_arg=hostent_data, aseek_cv_gethostname_arg=char))
+CXXFLAGS="$ac_save_CXXFLAGS"
+if test "$aseek_cv_gethostname_arg" = "hostent_data"; then
+	AC_DEFINE(HAVE_GETHOSTBYNAME_R_WITH_HOSTENT_DATA, 1, \
+		[Define if third argument to gethostbyname_r
+		is hostent_data.])
+fi
+]
+)
+
+AC_CHECK_FUNC(inet_addr, , AC_CHECK_LIB(xnet, inet_addr, LIBS="-lxnet $LIBS"))
+
+
+dnl Determine signal handling standard
+AC_TYPE_SIGNAL
+AC_MSG_CHECKING(for POSIX signals)
+AC_TRY_LINK([#include <signal.h>],
+[   sigset_t ss;
+    struct sigaction sa;
+    sigemptyset(&ss); sigsuspend(&ss);
+    sigaction(SIGINT, &sa, (struct sigaction *) 0);
+    sigprocmask(SIG_BLOCK, &ss, (sigset_t *) 0);
+],
+    AC_DEFINE(HAVE_POSIX_SIGNALS, 1, \
+	[Define if you have POSIX type signal handling routines.])
+    AC_MSG_RESULT(yes),
+    AC_MSG_RESULT(no)
+)
+
+
+charset_guesser=no
+AC_MSG_CHECKING(for charset guesser)
+AC_ARG_ENABLE(charset-guesser,
+ [Various features:
+ --enable-charset-guesser Enable automatic charset guesser],
+ charset_guesser=$enableval)
+
+ if test "$charset_guesser" != no; then
+     AC_DEFINE(USE_CHARSET_GUESSER, 1,
+	[Define if automatic charset guesser is enabled.])
+     AC_MSG_RESULT(enabled)
+     features="$features\n * Automatic charset/language guesser"
+ else
+     AC_MSG_RESULT(disabled)
+ fi
+
+clones_by_site=yes
+AC_MSG_CHECKING(for \"limiting clones by site\" feature)
+AC_ARG_ENABLE(clones-by-site,
+ [ --disable-clones-by-site Disable clones-by-site feature (enabled by default)],
+ clones_by_site=$enableval)
+
+ if test "$clones_by_site" != no; then
+     AC_DEFINE(LIMIT_CLONES_BY_SITE, 1, \
+	[Define if clones-by-site feature is enabled.])
+     AC_MSG_RESULT(enabled)
+     features="$features\n * Limiting clones by site"
+ else
+     AC_MSG_RESULT(disabled)
+     RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --disable-clones-by-site"
+ fi
+
+use_fontsize=no
+AC_MSG_CHECKING(if fontsize is used in weight calculation)
+AC_ARG_ENABLE(font-size,
+ [ --enable-font-size       Use fontsize in weight calculation],
+ use_fontsize=$enableval)
+
+ if test "$use_fontsize" != no; then
+     AC_DEFINE(USE_FONTSIZE, 1, \
+	[Define if fontsize is used in weight calculation.])
+     AC_MSG_RESULT(enabled)
+     features="$features\n * Use font size in document weight calculation"
+     RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --enable-font-size"
+ else
+     AC_MSG_RESULT(disabled)
+ fi
+
+optimize_clones=yes
+AC_MSG_CHECKING(for fast clones lookup)
+AC_ARG_ENABLE(fast-clones,
+ [ --disable-fast-clones    Disable fast clones lookup (for 1.0 compatibility)],
+ optimize_clones=$enableval)
+
+ if test "$optimize_clones" != yes; then
+     AC_MSG_RESULT(disabled)
+     RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --disable-fast-clones"
+ else
+     AC_DEFINE(OPTIMIZE_CLONE, 1, \
+	[Define if fast clones lookup is enabled.])
+     AC_MSG_RESULT(enabled)
+     features="$features\n * Fast clones lookup"
+ fi
+
+ext_conv=yes
+AC_MSG_CHECKING(for external mime-type converters)
+AC_ARG_ENABLE(ext-conv,
+ [ --disable-ext-conv       Disable external mime-type converters support],
+ ext_conv=$enableval)
+
+ if test "$ext_conv" != no; then
+     AC_DEFINE(USE_EXT_CONV, 1, \
+	[Define if external mime-type converters are enabled.])
+     AC_MSG_RESULT(enabled)
+     features="$features\n * Support for external mime-type converter programs"
+ else
+     AC_MSG_RESULT(disabled)
+     RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --disable-ext-conv"
+ fi
+
+dnl mp3=no
+dnl AC_MSG_CHECKING(whether to enable MP3 ID3 tags support)
+dnl AC_ARG_ENABLE(mp3,
+dnl [
+dnl MP3 ID3 tags support:
+dnl   --enable-mp3            enable
+dnl   --disable-mp3           disable (default)],
+dnl mp3=$enableval)
+dnl
+dnl if test "$mp3" != no; then
+dnl     AC_DEFINE(USE_MP3)
+dnl     AC_DEFINE(USE_GROUP)
+dnl     AC_MSG_RESULT(yes)
+dnl else
+dnl     AC_MSG_RESULT([no])
+dnl fi
+
+
+dnl file=yes
+dnl AC_MSG_CHECKING(for file: URL schema support)
+dnl AC_ARG_ENABLE(file,
+dnl [
+dnl file: URL schema support:
+dnl   --enable-file           enable (default)
+dnl   --disable-file          disable],
+dnl file=$enableval)
+dnl
+dnl if test "$file" != no; then
+dnl     AC_DEFINE(USE_FILE)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+
+
+dnl http=yes
+dnl AC_MSG_CHECKING([for http: (and ftp: - via proxy) URL schema support])
+dnl AC_ARG_ENABLE(http,
+dnl [
+dnl http: URL schema support:
+dnl   --enable-http           enable (default)
+dnl   --disable-http          disable],
+dnl http=$enableval)
+dnl
+dnl if test "$http" != no; then
+dnl     AC_DEFINE(USE_HTTP)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+
+dnl ftp=yes
+dnl AC_MSG_CHECKING(for ftp: URL schema support)
+dnl AC_ARG_ENABLE(ftp,
+dnl [
+dnl ftp: URL schema support:
+dnl   --enable-ftp            enable (default)
+dnl   --disable-ftp           disable],
+dnl ftp=$enableval)
+dnl
+dnl if test "$ftp" != no; then
+dnl     AC_DEFINE(USE_FTP)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+
+
+dnl htdb=yes
+dnl AC_MSG_CHECKING(for htdb: virtual URL schema support)
+dnl AC_ARG_ENABLE(htdb,
+dnl [
+dnl htdb: virtual URL schema support:
+dnl   --enable-htdb           enable (default)
+dnl   --disable-htdb          disable],
+dnl htdb=$enableval)
+dnl
+dnl if test "$htdb" != no; then
+dnl     AC_DEFINE(USE_HTDB)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+
+
+dnl news=yes
+dnl AC_MSG_CHECKING(for news: URL schema support)
+dnl AC_ARG_ENABLE(news,
+dnl [
+dnl news: URL schema support:
+dnl   --enable-news           enable (default)
+dnl   --disable-news          disable],
+dnl news=$enableval)
+dnl
+dnl if test "$news" != no; then
+dnl     AC_DEFINE(USE_NEWS)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+dnl
+dnl ext=no
+dnl dnl AC_MSG_CHECKING(for extended NEWS features)
+dnl AC_ARG_ENABLE(news-extension,
+dnl [  --enable-news-extension enable extended NEWS features
+dnl   --disable-news-extension
+dnl                           disable (default)]
+dnl ,
+dnl ext=$enableval)
+dnl
+dnl if test "$ext" != no; then
+dnl     AC_DEFINE(NEWS_EXT)
+dnl     AC_MSG_RESULT(enabled)
+dnl else
+dnl     AC_MSG_RESULT([disabled])
+dnl fi
+
+unicode=yes
+AC_MSG_CHECKING(for Unicode support)
+AC_ARG_ENABLE(unicode,
+[ --disable-unicode        Disables Unicode (multiple character sets) support],
+unicode=$enableval)
+
+if test "$unicode" != yes; then
+	AC_MSG_RESULT(disabled)
+	RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --disable-unicode"
+	CONFIG_LINE_TO_REMOVE="Include ucharset.conf"
+	RPM_TABLES_DIR=charsets
+	RPM_TABLES_CONF=charsets.conf
+else
+	AC_DEFINE(UNICODE, 1, \
+		[Define if you want database to be in Unicode format.])
+	RPM_TABLES_DIR=tables
+	RPM_TABLES_CONF=ucharset.conf
+	USE_UNICODE=yes
+	AC_SUBST(USE_UNICODE)
+	AC_MSG_RESULT(enabled)
+	CONFIG_LINE_TO_REMOVE="Include charsets.conf"
+        features="$features\n * Store data in Unicode format"
+fi
+
+AC_SUBST(CONFIG_LINE_TO_REMOVE)
+AM_CONDITIONAL(UNICODE, test "$unicode" = "yes")
+
+sinclude(misc/utils.m4)
+
+apache=no
+AC_MSG_CHECKING(for Apache module support)
+AC_ARG_ENABLE(apache-module,
+[ --enable-apache-module[=DIR]
+                          Enable building of Apache module.  DIR is the Apache
+                          base install directory, defaults to /usr/local/apache.],
+[
+	apache=$enableval
+])
+
+  if test "$apache" != "no"; then
+        if test "$apache" = "yes"; then
+	    PATH_DIRS=`echo $PATH | tr : \ `
+	    MY_DIRS="/usr/sbin /usr/local/apache/bin /home/httpd/bin/"
+	    for DIR in $PATH_DIRS $MY_DIRS; do
+        	if test -f $DIR/apxs; then
+            		APXS=$DIR/apxs
+			break;
+		fi
+	    done
+	    if test -z "$APXS"; then
+		AC_MSG_ERROR([
+** Can't find apxs in $PATH_DIRS $MY_DIRS])
+	    fi
+        elif test "$apache" != ""; then
+	    MY_DIRS="$apache/bin $apache/sbin $apache"
+	    for DIR in $MY_DIRS; do
+		if test -f $DIR/apxs; then
+		    APXS=$DIR/apxs
+		    break;
+		fi
+	    done
+	    if test -z "$APXS"; then
+		AC_MSG_ERROR([
+** Can't find apxs in $MY_DIRS])
+	    fi
+	fi
+	APACHE_INCDIR=`$APXS -q INCLUDEDIR`
+	if test $? -ne 0; then
+		AC_MSG_ERROR([
+** Seems that apache module can't be compiled on your system])
+	fi
+	APACHE_MODDIR=`$APXS -q LIBEXECDIR`
+	APACHE_MODULE="mod_aspseek.so"
+	AC_SUBST(APACHE_INCDIR)
+	AC_SUBST(APACHE_MODDIR)
+	AC_SUBST(APXS)
+	USE_APACHE_MODULE=1
+	AC_MSG_RESULT([yes
+	apxs is $APXS
+	includes at $APACHE_INCDIR])
+	features="$features\n * Apache module"
+	RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --enable-apache-module"
+
+  else
+	AC_MSG_RESULT(no)
+	APACHE_MODULE=""
+	USE_APACHE_MODULE=0
+  fi
+
+AC_SUBST(APACHE_MODULE)
+AC_SUBST(USE_APACHE_MODULE)
+
+AM_CONDITIONAL(APACHEMODULE, test "x$apache" != 'xno')
+
+AC_MSG_CHECKING(for OpenSSL support)
+AC_ARG_WITH(openssl,
+[ --with-openssl[=DIR]     Enable HTTPS support.  DIR is the OpenSSL
+                          base install directory, defaults to /usr/local/ssl.],
+[
+  if test "$withval" != "no"; then
+        if test "$withval" = "yes"; then
+                if test -f /usr/include/openssl/ssl.h; then
+                        SSL_INCDIR=/usr/include
+                else
+                        SSL_INCDIR=/usr/local/ssl/include
+                fi
+                if test -f /usr/lib/libssl.a; then
+                        SSL_LIBDIR=/usr/lib
+                else
+                        SSL_LIBDIR=/usr/local/ssl/lib
+                fi
+		RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --with-openssl"
+        else
+                SSL_INCDIR=$withval/include
+                test -d $withval/include/openssl && SSL_INCDIR=$withval/include
+                SSL_LIBDIR=$withval/lib
+		RPM_CONFIGURE_FLAGS="$RPM_CONFIGURE_FLAGS --with-openssl=$withval"
+        fi
+    AC_ADD_INCLUDE($SSL_INCDIR)
+    AC_EXPAND_PATH($SSL_LIBDIR, ABS_SSL_LIBDIR)
+    SSL_LIBS="-L$ABS_SSL_LIBDIR -lcrypto -lssl"
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(USE_HTTPS, 1, \
+	[Define if you want to use SSL (support for https:// scheme).])
+    features="$features\n * Support for https:// secure protocol"
+  else
+    AC_MSG_RESULT(no)
+  fi
+],[
+  AC_MSG_RESULT(no)
+])
+
+AC_SUBST(SSL_LIBS)
+
+# Allows to set maximum URL length.
+DEF_URL_LEN=128
+AC_MSG_CHECKING(for maximum URL length)
+AC_ARG_ENABLE(max-url-length,
+[ --enable-max-url-length=NUM
+                          Sets maximum URL length to NUM. Default is 128.],
+[
+	if test "x$enableval" != "xyes"; then
+		# Check that arg is number
+		NOTNUM=`echo "$enableval" | sed 's/[[0123456789]]//g'`
+		if test "x$NOTNUM" != "x"; then
+			AC_MSG_ERROR([
+*** Argument to --enable-max-url-length option should be a number.
+]);
+		fi
+		if test $enableval -gt 255; then
+			AC_MSG_ERROR([
+*** Maximum supported value for URL length is 255.
+]);
+		fi
+		URL_LEN=$enableval
+		features="$features\n * Maximum URL length is $URL_LEN"
+	else
+		URL_LEN=$DEF_URL_LEN
+	fi
+],
+[
+	URL_LEN=$DEF_URL_LEN
+])
+
+AC_MSG_RESULT($URL_LEN)
+AC_SUBST(URL_LEN)
+AC_DEFINE_UNQUOTED(MAX_URL_LEN, $URL_LEN, [Maximum URL length to be used.])
+
+dnl Check for some DBMS backend
+dnl NOTE: we should have at least one backend
+have_db=no
+db_names=""
+dnl we use MySQL by default --kir.
+mysql=yes
+
+AC_MSG_CHECKING(for MySQL support)
+AC_ARG_WITH(mysql,
+[Databases support:
+ --with-mysql[=DIR]       Include MySQL support.  DIR is the MySQL base
+                          install directory, default is to search through
+                          a number of common places for the MySQL files.],
+mysql=$withval)
+
+
+  if test "$mysql" != "no"; then
+  	if test "$mysql" = "yes"; then
+		if test -f /usr/local/mysql/include/mysql/mysql.h; then
+			MYSQL_INCDIR=/usr/local/mysql/include/mysql
+			MYSQL_LIBDIR=/usr/local/mysql/lib/mysql
+		elif test -f /usr/include/mysql/mysql.h; then
+			MYSQL_INCDIR=/usr/include/mysql
+			MYSQL_LIBDIR=/usr/lib/mysql
+		elif test -f /usr/include/mysql.h; then
+			MYSQL_INCDIR=/usr/include
+			MYSQL_LIBDIR=/usr/lib
+		elif test -f /usr/local/include/mysql/mysql.h; then
+			MYSQL_INCDIR=/usr/local/include/mysql
+			MYSQL_LIBDIR=/usr/local/lib/mysql
+		elif test -f /usr/local/include/mysql.h; then
+			MYSQL_INCDIR=/usr/local/include
+			MYSQL_LIBDIR=/usr/local/lib
+		elif test -f /home/mysql/include/mysql/mysql.h; then
+			MYSQL_INCDIR=/home/mysql/include/mysql
+			MYSQL_LIBDIR=/home/mysql/lib/mysql
+		else
+		    mysql=no
+    		    AC_MSG_RESULT(no)
+		fi
+   	else
+		if test -f $mysql/include/mysql/mysql.h; then
+   			MYSQL_INCDIR=$mysql/include/mysql
+   			MYSQL_LIBDIR=$mysql/lib/mysql
+		elif test -f $mysql/include/mysql.h; then
+   			MYSQL_INCDIR=$mysql/include
+   			MYSQL_LIBDIR=$mysql/lib
+		else
+		    mysql=no
+    		    AC_MSG_RESULT(no)
+		    AC_MSG_ERROR(Invalid MySQL directory - unable to find mysql.h under $withval)
+		fi
+   	fi
+  else
+	AC_MSG_RESULT(no)
+  fi
+
+  USE_MYSQL=0
+
+  if test "$mysql" != "no"; then
+    USE_MYSQL=1
+    MYSQL_INCLUDES=-I$MYSQL_INCDIR
+    MYSQL_LIBS="-L$MYSQL_LIBDIR -lmysqlclient"
+
+    AC_DEFINE(HAVE_MYSQL, 1, [Define if you have MySQL database.])
+    AC_MSG_RESULT([yes
+	includes at $MYSQL_INCDIR
+	libraries at $MYSQL_LIBDIR])
+    have_db=yes
+
+    AC_SUBST(MYSQL_INCLUDES)
+    AC_SUBST(MYSQL_LIBS)
+    db_names="$db_names MySQL"
+
+    if test $clones_by_site != no; then
+    	MYSQL_CRC_INDEX=site_id,crc\(8\)
+    else
+    	MYSQL_CRC_INDEX=crc\(8\)
+    fi
+
+    if test $optimize_clones != no; then
+	MYSQL_CRC_INDEX="origin, $MYSQL_CRC_INDEX"
+    fi
+
+    if test $unicode != no; then
+    	MYSQL_VAR=varbinary
+    	MYSQL_WORD_TYPE=tinyblob
+	MYSQL_WORD_INDEX=word\(64\)
+    else
+    	MYSQL_VAR=varchar
+	MYSQL_WORD_TYPE=varchar\(32\)
+	MYSQL_WORD_INDEX=word
+    fi
+
+    if test $optimize_clones != no; then
+        MYSQL_ORIGIN="origin integer,"
+    else
+        MYSQL_ORIGIN=""
+    fi
+
+    MYSQL_TITLE_TYPE=${MYSQL_VAR}\(128\)
+    MYSQL_TXT_TYPE=${MYSQL_VAR}\(255\)
+    MYSQL_DESCR_TYPE=${MYSQL_VAR}\(100\)
+    AC_SUBST(MYSQL_CRC_INDEX)
+    AC_SUBST(MYSQL_WORD_TYPE)
+    AC_SUBST(MYSQL_WORD_INDEX)
+    AC_SUBST(MYSQL_TITLE_TYPE)
+    AC_SUBST(MYSQL_TXT_TYPE)
+    AC_SUBST(MYSQL_DESCR_TYPE)
+    AC_SUBST(MYSQL_ORIGIN)
+
+    dnl MySQL requires -lm sometimes
+    AC_CHECK_FUNC(floor, , AC_CHECK_LIB(m, floor, DB_LIBS="$DB_LIBS -lm"))
+
+  fi
+
+AM_CONDITIONAL(MYSQL, test "$mysql" != "no")
+AC_SUBST(USE_MYSQL)
+
+# We try to use Oracle8i by default
+oracle8i=yes
+AC_MSG_CHECKING(for Oracle8i support)
+AC_ARG_WITH(oracle8i,
+[ --with-oracle8i[=DIR]    Include Oracle8i support. DIR is the Oracle base
+                          install directory, defaults to \$ORACLE_HOME],
+oracle8i=$withval)
+
+
+	if test "$oracle8i" != "no"; then
+		if test "$oracle8i" = "yes"; then
+			oracle8i="$ORACLE_HOME"
+		fi
+		if test -f "$oracle8i/rdbms/demo/oci.h"; then
+			ORACLE8_INCDIR1="$oracle8i/rdbms/demo/"
+			ORACLE8_INCDIR2="$oracle8i/rdbms/public/"
+			ORACLE8_INCDIR3="$oracle8i/network/public/"
+			ORACLE8_INCDIR4="$oracle8i/plsql/public/"
+			ORACLE8_LIBDIR1="$oracle8i/lib"
+			ORACLE8_LIBDIR2="$oracle8i/rdbms/lib"
+			ORACLE8_INCLUDES="-I$ORACLE8_INCDIR1 -I$ORACLE8_INCDIR2 -I$ORACLE8_INCDIR3 -I$ORACLE8_INCDIR4"
+			ORACLE8_LIBS="-L$ORACLE8_LIBDIR1 -L$ORACLE8_LIBDIR2 -lclntsh -lm"
+ 			AC_DEFINE(HAVE_ORACLE8, 1, \
+			    [Define if you want to use Oracle 8i SQL Server.])
+			USE_ORACLE8=1
+			AC_MSG_RESULT(yes)
+			have_db=yes
+
+			if test $clones_by_site != no; then
+				ORACLE_CRC_INDEX=urlword\(site_id,crc\)
+			else
+				ORACLE_CRC_INDEX=urlword\(crc\)
+			fi
+
+			if test $unicode != no; then
+				ORACLE_VAR="blob"
+				ORACLE_DEF="default empty_blob()"
+				ORACLE_WORD_TYPE=nvarchar2\(96\)
+
+				ORACLE_TITLE_TYPE=${ORACLE_VAR}
+				ORACLE_TXT_TYPE=${ORACLE_VAR}
+				ORACLE_DESCR_TYPE=${ORACLE_VAR}
+				ORACLE_KEYWRD_TYPE=${ORACLE_VAR}
+			else
+				ORACLE_VAR=varchar2
+				ORACLE_DEF="default ''"
+				ORACLE_WORD_TYPE=varchar2\(32\)
+
+				ORACLE_TITLE_TYPE=${ORACLE_VAR}\(128\)
+				ORACLE_TXT_TYPE=${ORACLE_VAR}\(255\)
+				ORACLE_DESCR_TYPE=${ORACLE_VAR}\(100\)
+				ORACLE_KEYWRD_TYPE=${ORACLE_VAR}\(100\)
+			fi
+
+			if test $optimize_clones != no; then
+				ORACLE_ORIGIN="origin number(11),"
+			else
+				ORACLE_ORIGIN=""
+			fi
+			AC_SUBST(ORACLE_CRC_INDEX)
+			AC_SUBST(ORACLE_DEF)
+			AC_SUBST(ORACLE_WORD_TYPE)
+			AC_SUBST(ORACLE_TITLE_TYPE)
+			AC_SUBST(ORACLE_TXT_TYPE)
+			AC_SUBST(ORACLE_DESCR_TYPE)
+			AC_SUBST(ORACLE_KEYWRD_TYPE)
+			AC_SUBST(ORACLE_ORIGIN)
+
+			AC_SUBST(ORACLE8_INCLUDES)
+			AC_SUBST(ORACLE8_LIBS)
+			db_names="$db_names Oracle8i"
+		else
+    			AC_MSG_RESULT(no)
+			oracle8i=no
+			USE_ORACLE8=0
+		fi
+	fi
+
+
+AM_CONDITIONAL(ORACLE8, test "$oracle8i" != "no")
+# for .spec file
+AC_SUBST(USE_ORACLE8)
+
+
+dnl
+dnl Here goes stuff for other databases - we'll include it as needed
+dnl
+
+dnl Check if one of databases was selected
+if test "$have_db" != "yes"; then
+	AC_MSG_ERROR([
+***
+*** You should select database!
+***])
+fi
+
+dnl autowild=yes
+dnl AC_MSG_CHECKING(whether to enable wildcards in URL limits in search.cgi)
+dnl AC_ARG_ENABLE(auto-wildcard,
+dnl [Misc options:
+dnl   --disable-auto-wildcard Disable automatic wildcards '%limit%'
+dnl 			  for URL limits in search.cgi],
+dnl 	[ autowild=$enableval ],
+dnl 	[ autowild=yes ]
+dnl 	)
+dnl
+dnl if test "$autowild" != no ; then
+dnl 	AC_DEFINE(USE_AUTO_WILD)
+dnl 	AC_MSG_RESULT(yes)
+dnl else
+dnl 	AC_MSG_RESULT([no])
+dnl fi
+
+dnl ------------------
+dnl final preparations
+dnl ------------------
+
+AC_SUBST(INCLUDES)
+AC_SUBST(COMMON_LIBS)
+AC_SUBST(RPM_CONFIGURE_FLAGS)
+AC_SUBST(RPM_TABLES_DIR)
+AC_SUBST(RPM_TABLES_CONF)
+
+dnl NOOPT_CXXFLAGS=`echo "${CXXFLAGS}" | sed 's/-O./ /'`
+dnl AC_SUBST(NOOPT_CXXFLAGS)
+
+dnl Create dir in case we do build out of source directory
+mkdir -p etc/sql
+
+AC_OUTPUT([misc/expand-prefix misc/aspseek.spec Makefile src/Makefile
+ doc/Makefile etc/Makefile include/Makefile misc/Makefile src/mysql/Makefile
+ src/oracle8i/Makefile man/Makefile etc/aspseek.conf-dist
+ etc/searchd.conf-dist include/paths.h etc/sql/mysql/tables.sql
+ etc/sql/orcl/tables.sql misc/aspseek-mysql-postinstall
+ misc/aspseek misc/doxy.conf
+ man/aspseek.7.ep man/searchd.1.ep man/searchd.conf.5.ep
+ man/aspseek.conf.5.ep man/s.cgi.1.ep man/s.htm.5.ep
+ man/index.1.ep man/aspseek-sql.5.ep
+ include/my_hash_map include/my_hash_set])
+
+dnl Fixing ${prefix} and ${exec_prefix}
+chmod a+x misc/expand-prefix
+./misc/expand-prefix etc/aspseek.conf-dist etc/searchd.conf-dist \
+ include/paths.h misc/aspseek-mysql-postinstall misc/aspseek
+
+chmod a+x misc/aspseek-mysql-postinstall misc/aspseek
+
+dnl Print end message only if run "by hand"
+if test ! "$no_create" -a ! "$no_recursion"; then
+if test GXX; then
+	COMPILER_NAME="`$CXX --version`";
+else
+	COMPILER_NAME=$CXX;
+fi
+echo
+echo "-------------------------------------------------------------"
+echo " ASPseek v${VERSION} is now configured as follows:"
+echo
+echo "C++ compiler:          $COMPILER_NAME"
+echo "Installation path:     $prefix"
+echo "Supported database(s): $db_names"
+echo -e "Features enabled:$features"
+echo "-------------------------------------------------------------"
+echo
+echo "Now it's time to run make and make install-strip"
+echo "Notice: This version can be compiled under"
+echo "GCC from 2.9.5 to 3.3.6!"
+echo;
+fi

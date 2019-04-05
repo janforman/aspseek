@@ -1,0 +1,223 @@
+---------------
+        v.1.2.15
+Added option to dirty reconnect, discontinued in MySQL5
+This solved bug with lost connection from SEARCHD
+
+---------------
+	v.1.2.13
+This version can be compiled with GCC up to version 3.3.6
+Some minor changes in database connection and tested with MySQL5.1
+
+---------------
+	v.1.2.10
+
+This is mostly bug-fixing release. One nasty bug that was introduced in
+previous release and resulted in index coredump while doing reverse citations
+merging is fixed. Note that you need to run index -H to recreate citation
+index if you have used 1.2.9; alternative way is clear the whole database
+and reindex everything from scratch.
+
+Several less important bugs were fixed as well. Configuration files were
+revised, and some ancient unused stuff cleared out of them. Several minor
+documentation bugs were fixed. A few minor fixes went to init.d/aspseek,
+aspseek-mysql-postinstall, and .spec file used to create RPM package.
+
+Only one feature was added - DBLibDir directive for searchd and index,
+which can be used to add a directory to the list of directories used for
+searching database backend library.
+
+---------------
+	v.1.2.9
+
+Quite a lot of changes. Several bugs were fixed, including two rare memleaks
+in searchd and several coredumps, thus lead to improved stability. This
+release should also compile cleanly on FreeBSD.
+
+This release also contains several fixes from Matt Sullivan
+<matt@sullivan.gen.nz>. Below is description of patches from the author:
+
+* Fixed non thread safe use of scanner typeTable which caused corruption
+  of the table in medium to high load situations (in particular this
+  permanently broke use of "-" in queries (until next searchd restart)
+  i.e. 'abc -xyz' would become 'abc AND xyz').
+
+* Fixed a small bug in templates.cpp which caused newlines to be added
+  before ending font tag during cached page hilighting (effect was that
+  cached page would not appear exactly as original in some cases).
+
+* Fixed rare segfault resulting from buffer overflow when creating query
+  key for query cache (*many* stemmed words could overflow buffer).
+
+* Improved tag parsing to handle omitted quotes, fixes cases such as
+  <A HREF="http://www.server.com"; TARGET=_new">  Side effect is more URLs
+  are discovered.  Previously remainder of document would be ignored
+  (resulting in URLs were not added).
+
+* Fixed problem where script name has no suffix (exacerbated by addition
+  of host to script_name) also removes prepending of hostname to script_name
+  (not removed in mod_aspseek although it should be optional here also).
+
+* Initial URL insertion (via "Server" config parameters or use of '-i') and
+  URL deletion ('-C'; was this by design?) does not use delmap.
+
+* Fixes order of logging of "Adding URL" in single threaded mode to be
+  consistant with both realtime and threaded index modes i.e. log before
+  call to HTTPGetUrlAndStore() rather than after (in past I think this
+  has been a source of some user confusion when messages such as
+  "URL deleted" appear before rather than after "Adding URL".
+
+* Adds support for HTTP method POST to s.cgi.
+
+* Adds feature which allows non-incrementing of hops value when redirects
+  encountered. Adds two config options: IncrementHopsOnRedirect and
+  RedirectLoopLimit.
+
+Great work, Matt!
+
+Since this version index implements new strategy of indexing "dead" sites
+(sites that does not respond to requests). Now number of threads that are
+processing such sites are limited to quarter of total number of threads,
+as long as there are enough non-dead sites to process.
+
+Also, a new nice feature was added. The "Replace" aspseek.conf directive
+now works as sed's "s" command and so can accept \( and \) constructions
+in search expression, and \1 to \9 - in replacement. See aspseek.conf(5)
+man page for more details. Code was contributed by Jeff Watts
+<jeff.watts@ni.com>.
+
+If you are upgrading from 1.2.8 or earlier versions, please note the
+following:
+
+1). If you had many sites and reindexed them, it is advisable to run
+index -H to re-create citation index files. Versions of ASPseek prior to
+this had a bug that caused extra bytes to be written to the above mentioned
+files in the process of merging of direct citation index.
+
+2). If you have used "Cache" feature, please rename the SQL table "cache"
+to "rescache". This is done with "ALTER TABLE cache RENAME TO rescache"
+SQL statement.
+
+---------------
+	v.1.2.8
+
+The most interesting new feature in this release is module for Apache
+contributed by Ivan Gudym <ignite@ukr.net>. This module can be used
+instead of s.cgi frontend. See README.APACHE_MODULE for more details.
+Please note that this feature is still experimental.
+
+As a side effect from mod_aspseek development, generic aspseek client C library
+is available (s.cgi and mod_aspseek now both use this library). So, it is
+much easier now to develop more frontends, please feel free to write one ;)
+
+It was discovered that our code is still need fixing in order to be compiled
+by gcc3. This release contains much more gcc3-related fixes, so now we are
+able to at least compile it using gcc3 (not sure about how good it will work).
+
+We have also fixed the code to be 64-bit clean and even tested in on Alpha
+platform, so people who have such hardware are welcome to do more tests.
+
+This release also fixes problem of s.cgi not working with the new Apache.
+Seems that Apache is now closing file descriptor 0 (stdin) before running
+s.cgi, and s.cgi code had a bug that was triggered by it.
+
+Also, a major and long-standing bug was fixed. The bug caused "orphaned"
+results to be found sometimes, after a few reindexing sessions. "Orphaned"
+means results had no content assosiated with it, no title, no cached copy
+etc. If you see it on your system, try to use 'index -X1' to check and
+'index -X2' to repair your database (these options were introduced in 1.2.6).
+Also, if you use 'searchd' from 1.2.8, this will never happen again.
+
+We have received quite a lot of complaints about non-working external
+converters in version 1.2.7 and earlier. Most of the people complained
+about "Can not get exited child pid" error message printed by index while
+running external converter programs. There wasn't an actual error, but
+just a message printed by a piece of code we have inserted trying to debug
+a problem with dying resolvers; converters actually worked OK. Well, we have
+removed this piece of code as it is not needed any more and confuses people.
+Another problem we have found it s.cgi was unable to print correct Content-Type
+header while showing the "Cached copy" of document that was converted by
+external converter. This is fixed now. So external converters are working and
+were working before; people who submit bug reports probably have some problems
+with configuration or converter programs itself.
+
+One user reported crash when using index. It was discovered that he was set
+MaxWordLength to value > 32. So we have implemented a check and limit the
+value to the build-in maximum. If you do really want to see words as
+large as >32 characters, you need to fix some aspseek code as well as SQL
+tables, and only when increase MaxWordLength value in aspseek.conf. So it
+is there mostly for decreasing it.
+
+URLs which are marked deleted during crawling are now really deleted after
+delta files merging from urlword table and their URL IDs will be reused
+during next indexing sessions. This feature helps to decrease maximum
+URL ID and thus memory consumed by "searchd" process.
+
+Last but not least, two man pages were added: index(1) and aspseek-sql(5).
+Latter page described structure of SQL database used by ASPseek.
+
+---------------
+	v.1.2.7
+
+Previous version introduced new CBuddyHeap class; after the release it
+was discovereds that implementation was not portable to non-Linux platforms.
+More to say, 1.2.6 was uncompilable on some Linux distributions as well.
+This release aims to fix that issues. More to say, code should be compilable
+by GCC v.3 now.
+
+At last we have found and fixed the reason of "hanging resolvers" bug in
+index that appeared in 1.2.5 and hits many people since that time. So people
+who is still using 1.2.4a for that reason can now uprgade.
+
+We have also fixed random number generation facility, which apparently was
+broken.
+
+Jan Karabina sent a one-line patch that fixes incorrect index misbehaviour
+for URLs that are in CheckOnly or CheckOnlyNoMatch (GET was used instead of
+HEAD in HTTP query). He also sent us new langmap files for Czech encodings
+and corrected Unicode table for cp852 encoding.
+---------------
+	v.1.2.6
+
+In this version we have fixed numerous small and not-so-small bugs, as well
+as added some improvements and new features. Here some changes are described
+in details; for full list of changes see the NEWS file.
+
+To summarize, this version should be more stable, as we have found the
+reasons and fixed a few coredump cases, as well as healed some memory
+leaks. Also, some tricks were incorporated to boost performance: buddy heap
+is implemented for storing word position vectors in "index", replacing the
+standard STL vector class; CBufferedFile is implemented and is used instead
+of stdio during inverted index merging process (also known as "Saving
+delta files").
+
+Some other items from NEWS is explained here.
+
+* Added MultipleDBConnections parameter to searchd.conf
+
+Multiple DB connections feature is implemented in searchd. This improves
+concurrency between searchd threads, especially in the case when some threads
+do pattern search (which is slow), and other thread wants a simple search.
+
+* Exiting of resolver process is logged now
+* Event of breaking of read pipe in resolver process is logged now
+* SIGCHLD signals are caught by "index"
+
+We have some reports from users of 1.2.5 with complains about stuck of
+index process. The problem seems to be in the resolver process. So, we have
+added several facilities that can be helpful to nail down the bug.
+
+* Added -X and -H flags to "index"
+Use "index -X1" to check inverted index for URLs for which "urlword.deleted"
+field is non-zero. Use "index -X2" to fix it by appending information about
+deleted keys to the delta files. So if you want to remove records where
+"urlword.deleted" is non-zero, run index -X2; index -D, and finally perform
+SQL statements to delete unnecessary records.
+
+"index -H" is used to recreate citation indexes and ranks file from
+"urlwordsNN.hrefs" fields in case of citation index corruption.
+
+* Fixed -P and -A flags in "index"
+
+"index -P" is used to show "path" to given URL.
+
+"index -A" is used to add or delete site to/from web space.

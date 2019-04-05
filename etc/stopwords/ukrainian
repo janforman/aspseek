@@ -1,0 +1,35 @@
+# Stopwords for Ukrainian lagnuage (ua).
+# Encoding: koi8-u
+# Taken from MnogoSearch 3.1.8 distribution and modified to suit ASPseek format
+
+
+# By Vadim Tkachenko <vvtk@stealthcomp.com>
+
+з
+й
+що
+та
+╤з
+але
+цей
+коли
+як
+чого
+хоча
+нам
+яко╞
+чи
+це
+в╡д
+про
+╡
+╞х
+╙
+╤нших
+ти
+в╤н
+вона
+воно
+ми
+ви
+вони

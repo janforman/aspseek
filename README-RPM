@@ -1,0 +1,86 @@
+	ASPseek v.1.2 (http://www.aspseek.org/)
+	Advanced Internet search engine
+	Copyright (C) 2000, 2001, 2002 by SWsoft
+
+
+Latest ASPseek RPMs are available at http://www.aspseek.org/pkg/rpm/
+
+	Requirements
+	------------
+
+Before installing ASPseek from RPMs, you need the following packages
+to be installed:
+
+1. MySQL 3.23.xx or later version
+2. Apache (or some other web server which supports CGI)
+3. zlib
+
+	Installation
+	------------
+
+First, you need to install database back-end. Name of RPM file is
+aspseek-YOUR_DBMS-lib-*.rpm, there YOUR_DBMS is
+name of the DBMS (currently, back-end for MySQL 3.23 (mysql) is available).
+
+# rpm -i aspseek-mysql-lib-*.rpm
+
+If post-install script failed (you will see appropriate message), that means
+that you have probably set MySQL root password. So, you need to run this
+script (/usr/bin/aspseek-mysql-postinstall) again, giving MySQL root password
+as an argument. If you upgrade from earlier version, just ignore the error.
+
+When, you need to install "main" aspseek rpm.
+
+# rpm -i aspseek-*.rpm
+
+There shouldn't be any errors during installation.
+
+Next, you should install search client. Currently there is a choice
+between CGI binary and module for Apache web server. Both clients use
+aspseek client library and configuration files provided by
+aspseek-client rpm.
+
+If you want to use CGI, install the following packages:
+
+# rpm -i aspseek-client-*.rpm aspseek-cgi-*.rpm
+
+If you want to use Apache module, install the following packages:
+
+# rpm -i aspseek-client-*.rpm mod_aspseek-*.rpm
+
+Actually, you can install and use both clients simultaneously.
+
+	Configuration
+	-------------
+
+Look at /etc/aspseek directory - there are many configuration files in it.
+Main files are aspseek.conf (where you can set at least what sites do you
+want to index), searchd.conf (configuration of search daemon) and s.htm
+(where you can control how the search output will look like). Default settings
+let you to index and search http://localhost/. Most likely you want to change
+http://localhost/ to site(s) you actually want to index; for this, edit
+/etc/aspseek/aspseek.conf file.
+
+	First run
+	---------
+
+Become root and run '/etc/init.d/aspseek' start command. This will start
+search daemon. Then do 'su aspseek' (to become aspseek user) and run "index".
+After it will finish, open your browser and open URL
+http://yourhost.com/cgi-bin/s.cgi.
+
+	Further reading
+	---------------
+
+Read the documents provided with the package (which gets installed into
+/usr/share/doc/aspseek*/) and configuration files in /etc/aspseek (which are
+self-documented with many inlined comments). There are also a set of manual
+pages available: aspseek(7), index(1), searchd(1), s.cgi(1), aspseek.conf(5),
+searchd.conf(5), s.htm(5) and aspseek-sql(5).
+
+	Feedback
+	--------
+
+Write us to aseek@sw.com.sg, or visit homepage at http://www.aspseek.org/.
+If you want to send a bug report, please read the BUGS file about how to do
+it in a right way.

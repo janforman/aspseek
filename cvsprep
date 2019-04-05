@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# $Id: cvsprep,v 1.16 2001/11/13 15:23:34 kir Exp $
+#
+# This file is intended for developers only and is not included into dist
+# (C) 2000 kir@asplinux.ru
+# Please RUN this AFTER cvs checkout/update
+# This will re-create all needed stuff
+# (aclocal.m4, include/aspseek-cfg.h.in, Makefile.in-s, configure)
+# or you may end up with old versions of that.
+
+AUX_DIR=misc
+AUTO_ARGS=""
+
+for f in aclocal "libtoolize --force --copy" aclocal autoheader \
+ "automake --add-missing --copy" "autoconf $AUTO_ARGS"; do
+	echo $f
+	$f 2>&1 | grep -v "warning"
+done
+
+
+# If config.status exists that means we have run configure already,
+# so we need to run config.status to re-create Makefiles
+# in case something had changed...
+# If there's no config.status, you should run configure by hand
+if test -x ./config.status; then
+	echo ./config.status
+	./config.status
+	chmod a+x misc/expand-prefix
+	./misc/expand-prefix etc/aspseek.conf-dist etc/searchd.conf-dist \
+	include/paths.h misc/aspseek-mysql-postinstall
+	echo
+else
+	echo
+	echo "You need to run ./configure now";
+fi

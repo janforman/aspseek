@@ -1,0 +1,464 @@
+28 April 2007 v.1.2.15 (stable)
+* Added reconnect option for MySQL5+
+* Template cleaned (W3C Valid)
+
+02 Jan 2006: v.1.2.13 (stable)
+* Fixed some code
+* Added default regex filter to http://xxx.xxx.xx/xx scheme
+  (You can change it to ftp:// or https://) in aspseek.conf
+
+xx Xxx 2006: v.1.2.12 (stable)
+* Fixed Makefile.am
+* Fixed template <> bug in new GCC compiler
+* Fixed string definition in header file
+* Fixed initialization of reference in header file
+
+xx Xxx 2004: v.1.2.11 (stable)
+
+* Fixed two bugs caused incorrect processing of some UNICODE symbols
+* Fixed mistake in <!--/UdmComment--> closing tag processing
+* Fixed bug that caused s.cgi to die instead of displaying error
+  in case searchd is down (bug #16)
+* Fixed coredump on index/searchd start if libaspseek.so can not be found
+* Fixed processing of User-Agent in robots.txt (bug #19)
+* Fixed problem where ^C sends all resolvers into zombied state
+* Fixed s.cgi problem determining template name when Apache's AddHandler
+  and Action features are used
+* Fixed SGML entities in discovered HREFs not converted (bug #25)
+* Fixed a problem in CUrl::ParseURL() which corrupted some HREFs
+* Added rfc2396 compliant escaping of URI to CUrl::HTTPGetUrl()
+* Fixed processing of charset in 'Converter' directive of aspseek.conf
+* Added charset to 'Converter' directive in aspseek.conf(5) manpage
+* searchd prints warning in case of unknown site is used in 'SiteWeight'
+* Fixed wrong description of MaxDocSize parameter in aspseek.conf (5) man page
+* Fixed compilation on systems with gcc-3.2 (such as RedHat-8.0)
+* https:// now tries SSLv3 first, and can roll back to SSLv2 (bug #36)
+* Fixed bug in code (triggered by gcc32 -O1) that caused first character
+  of scheme string (like http://) to disappear
+* Fixed bug in external converters code that prevents converter from running
+  if Content-Type header returned by web server contained charset info
+* Fixed words before meta robots none/noindex still indexed (bug #15)
+* Added support for Last-Modified META tag
+* Added --enable-max-url-length parameter to configure
+* Fixed index message about stale pid file
+* Fixed problem where some queries may not be logged to stat table
+* Fixed incorrect calculation of chunk offset in CDelMap::IsSet()
+* Fixed misc/*.m4 scripts to satisfy newer auto* tools (bug #34)
+* Fixed parsing of meta http-equiv that contains quoted charset field
+  (such as content='text/html; charset="KOI8-R"')
+* Added --fno-strict-aliasing to CXXFLAGS that cured bad searchd looping
+  when compiled with gcc3
+* Fixed compilation with gcc-3.3 and libstdc++-3.3
+* Doc files (like this file) are no more installed during 'make install'
+* Added -F option for searchd (described in searchd(1) man page)
+
+
+22 Jul 2002: v.1.2.10 (stable)
+
+* Removed CharsetTable and LocalCharset from s.htm and manual
+* Added cs parameter into s.htm search form
+* Fixed bug in reverse citations merging which was introduced in 1.2.9
+  (please read "Upgrade" section in INSTALL if you have used 1.2.9)
+* Fixed incorrect redirects merging
+* Fixed incorrect merging of reverse citation index in case when
+  URL A refers to B which redirects to C and A also refers to C
+  and one of references from A disappeared
+* Fixed paths to s.htm in s.cgi man page
+* Added CharsetAlias directives to ucharset.conf
+* Fixed that ResultsPerPage parameter from s.htm overrides PS cookie (bug #12)
+* Fixed password generation in aspseek-mysql-postinstall script
+* Small improvements to init.d/aspseek script
+* Added DBLibDir directive to aspseek.conf and searchd.conf
+
+
+03 Jul 2002: v.1.2.9 (stable)
+
+* Implemented \1 to \9 sequences in Replace command in aspseek.conf
+* Fixes to work on FreeBSD
+* Improved /etc/init.d/aspseek script to return proper exit code
+  and shut down index while stopping
+* Fixed s.cgi coredump while working with several search daemons
+* Renamed SQL table 'cache' to 'rescache' to avoid collision with some DBMSes
+* Fixed bug that caused -a -f file to mark all URLs for re-index (bug #8)
+* Fixed bug in merging of direct citation index which resulted in incorrect
+  ranks calculation
+* Fixed rare memleak in searchd which occurred when one word was used more
+  than once in a query
+* Fixed 2 bugs in merging of reverse citations which could potentially
+  lead to index coredump
+* Fixed memleak in searchd when Cache was on and number of query page (np*ps)
+  was greater than number of cached results
+* Fixed search of words with uppercased letters with two-byte charsets
+* Man pages improvements and fixes
+* Fixed limiting results by range of dates (db and de) in s.cgi
+* Fixed connect problem when resolvers were used on big endian architecture
+* Fixed installation of docs and configs on some platforms
+* "site:" (site limit) is taken into account in results cache
+* Fixed rare searchd coredump which occurred when "site:" was used
+* Fixed incorrect search when more than one "-site:" was used
+* Fixed non-threadsafeness of query parser in searchd (it broke use
+  of "-" in queries in high-load situations)
+* Fixed bug of inserting newlines before ending font tag during
+  cached page highlighting
+* Fixed rare coredump in searchd if results cache was used
+* Improved tag parsing in index to handle omitted quotes, fixes cases
+  such as <A HREF="http://www.server.com"; TARGET=_new">
+* Initial URL insertion (via "Server" or '-i') and URL deletion procedures
+  in index now uses delmap
+* Fixed problem with s.cgi when it has no suffix
+* s.cgi does not prepend hostname to script_name
+* Added support for HTTP method POST to s.cgi
+* Number of index threads processing alive hosts is guaranteed to be no less
+  than 3/4 of total number of threads
+* Fixed rare coredump in searchd when cached page was queried and record
+  for that page existed in "urlword" but not existed in "urlwordsNN"
+* Added IncrementHopsOnRedirect and RedirectLoopLimit options to aspseek.conf
+* Added stopword lists for Catalan and Hungarian languages
+* Fixed stopwords.conf and manual pages to include charset parameter
+
+
+19 Feb 2002: v.1.2.8 (stable)
+
+* Own buffered files are used instead of FILE* during citation merging
+* Fixed incorrect (in some cases) processing of -u -t -s options in "index"
+* Added checks for broken pipe between "s.cgi" and "searchd"
+* Search operates correctly, when same URLs are present in both main
+  and real-time database
+* Fixed bug which resulted in not closing file in "searchd" when query word
+  is found in "wordurl" table, but in fact is not found anywhere
+* Fixed bug in excerpts processing, which could case infinite loop
+  when document has UTF-8 encoding
+* Added mechanism to reuse URL IDs
+* Fixed complains while loading charset files with empty lines
+* Added generic client library - libaspseek
+* Added module for Apache server (experimental)
+* Changed default log level to INFO
+* Fixes for 64-bit platforms such as Alpha
+* Fixes for gcc3/ISO C++ conformance (code is _really_ compilable now)
+* Almost get rid of acconfig.h (except for TOP and BOTTOM sections)
+* Updated/fixed FAQ, INSTALL, README.rpm, s.htm(5) man page
+* Fixed s.cgi error if file descriptor 0 is closed (new Apache does it)
+* Fixed bug that caused "orphaned" URLs in database
+* Fixed bug that prevented s.cgi from printing Content-Type header when
+  showing cached copy of converted (e.g. PostScript) document
+* Print warning and limit MaxWordLength if it exceeds build-in limit of 32
+* Added ability to generate table of contents for manual.ps
+* Removed -e "index" option (as it was not used)
+* Added man pages index(1), aspseek-sql(5)
+* Non-critical fixes to .spec file and aspseek-mysql-postinstall script
+
+
+07 Dec 2001: v.1.2.7 (stable)
+
+* Fixed clones processing
+* Fixed checking of deleted entries in inverted index
+* Fixed linking on some Linux platforms
+* Made the package more portable; should at least compile on non-Linux systems
+* s.cgi now loads template file with many comments faster
+* Fixed random number generation facility in s.cgi
+* Code is compilable with gcc3
+* Added more langmaps for Czech charsets
+* Fixed cp852 Unicode table
+* Fixed CheckOnly and CheckOnlyNoMatch behavior (GET was used instead of HEAD)
+* Made init.d/aspseek generated by configure to substitute needed paths
+* Added running aspseek-mysql-postinstall script from init.d/aspseek if
+  etc/db.conf file not found
+* Added another (smaller) list of Italian stopwords
+
+
+14 Nov 2001: v.1.2.6 (stable)
+
+* Changed logs.txt format
+* Implemented buddy like heap for storing of position vectors in "index"
+  for better memory usage
+* Fixed improper clones processing in "index"
+* Implemented buffered file to use instead of FILE* during inverted index
+  merging for faster processing
+* Fixed closing of unnecessary pipe handles in resolver and parent "index"
+  processes
+* Fixed coredumps in "searchd" which occurred when "Cache" mode is on and
+  complex expressions are searched
+* Added UrlBufferSize parameter to aspseek.conf
+* URL IDs sorting is performed by STL sort function instead of "ORDER BY"
+  during subsets generation
+* Changed output format of "index"
+* MaxDocsAtOnce is ignored now for sites to which connection was failed
+  last time
+* Fixed rare coredump in "searchd" if "site:" was used in query
+* Reduced amount of stack used by "index" to optimize memory usage and
+  eliminate rare coredumps occurred during citations merging
+* Added MultipleDBConnections parameter to searchd.conf
+* Time of SEGV in "searchd" is stored in dlog.log now
+* Fixed not important memory leak in "index" which occurred during ranks
+  calculation
+* Added -X and -H flags to "index"
+* SIGCHLD signals are caught and logged by "index"
+* Fixed huge memory leak in "SetNewOrigin" function of "index" which
+  could occur only when index was run to re-index existing database
+* Fixed rare coredump in "SetNewOrigin" function of "index"
+* Event of breaking of read pipe in resolver process is logged now
+* Exiting of resolver process is logged now
+* Optimized performance of "searchd" by replacing of many small "read"
+  calls to less number of big "read" calls in CResult::GetUrls(CSiteInfo*)
+* Fixed -P and -A flags in "index"
+* Optimized memory usage by reallocating of URL content buffer which
+  was filled by more than 100000 bytes last time
+* Removed MaxNetErrors parameter from aspseek.conf (as it is unused)
+* Added description of DeltaBufferSize, UrlBufferSize, WordCacheSize,
+  HrefCacheSize, NextDocLimit, UtfStorage, MaxDocsAtOnce,
+  MultipleDBConnections parameters to man pages
+* Added RELEASE-NOTES to the distribution
+
+24 Sep 2001: v.1.2.5 (stable)
+
+* Fixed rare memleak in searchd
+* Fixed searchd coredump under FreeBSD
+* Fixed loading of oracle8 driver
+* Fixed searchd coredumps caused by searching some phrases or word lists
+* Fixed searchd coredumps caused by very high value of "np" parameter
+* Significantly reduced memory required for multibyte dictionaries in both
+  "searchd" and "index"
+* Added -R switch to "searchd" for auto-restarting in case of SEGV
+* Added field "urlword.origin" to crc index in case fast clones are enabled
+* Changed calls to bzero() to memset() for better portability
+* Rewrote aspseek-mysql-postinstall to be more verbose
+* Added man pages: aspseek(7), aspseek.conf(5), s.cgi(1), s.htm(5), searchd(1),
+  searchd.conf(5) and removed some files from doc/ subdirectory
+* Added ASPSEEK_TEMPLATE environment variable processing to "s.cgi"
+* Removed OnlineGeo parameter from aspseek.conf (as it does not work)
+* Added langmap file for German language
+* Added MaxDocsAtOnce parameter (see etc/aspseek.conf-dist for details)
+* Fixed default HTTPS port number
+* Minor fix when HTTPS support is not compiled in
+* Fixed several bugs related to robots.txt processing
+* Added non-absolute URL support and whitespace stripping to redirect handling
+  in "index"
+* Added whitespace stripping from HREF
+* Redirect URI is not lowercased now
+* Added $$ processing to templates code
+* UtfStorage parameter has been implemented, see etc/aspseek.conf-dist and
+  etc/searchd.conf-dist for details
+
+
+03 Jul 2001: v.1.2.4 (stable)
+
+* Fixed few cases of s.sgi hogging all memory then searchd goes weird
+* Fixed searchd coredump when only site: keyword was used with section filters
+* Fixed searchd coredump when two threads try to reload ranks/lastmod
+* Fixed wrong path in aspseek-mysql-postinstall script
+* Scheme in URL is now case-insensitive
+* Fixed loading of DB driver (was broken on a few Linux platforms)
+* Source tarball do not contains DOS-style end-of-lines anymore
+* Added option -l to searchd to set log file name
+* Added MaxDocsPerServer option to aspseek.conf
+* Fixed word stats when using result cache
+
+
+14 Jun 2001: v.1.2.3 (stable)
+
+* Fixed OpenSSL linking (was broken in some cases)
+* Fixed index coredump on some URLs
+* Fixed bad s.cgi behavior of appending "No title"
+* Added some new warning messages to index
+* Fixed index coredump while checking delta files if there are no ones
+
+
+05 Jun 2001: v.1.2.2 (stable)
+
+* Added conditional URL deletion (works only with --enable-fast-clones)
+* Moved auto* stuff to misc directory
+* Added spec file and Makefile target for making RPMS/SRPMS
+* Added README.rpm
+* Added aspseek-mysql-postinstall script to deal with all MySQL stuff easy
+* Added enabled feature list printing to configure
+* Added checking of UID/GID to index and searchd (refuses to run as root now)
+* Fixed some possible buffer overflows
+
+
+24 May 2001: v.1.2.1 (stable)
+
+* Fixed coredump in searchd when stopword or non existent word is used with "-"
+* Removed -c option from index
+* Added https:// scheme support (needs OpenSSL)
+* Fixed ignoring robots.txt in URL file then using "index -i -f file"
+* Fixed wrong ranks filename used when recalculating PageRanks with -K option
+
+
+16 May 2001: v.1.2.0 (stable)
+
+* Fixed bugs then stopword is used in OR expression
+* Set defaults to enable CompactIndex, IncrementalCitations, UNICODE and
+  "fast clones lookup" features
+* Fixed configuration bug with fast clone lookup
+* Added "MinFixedPatternLength" parameter to searchd.conf and set default
+  to 6 (it was fixed to 3 in previous versions)
+* Fixed resetting s.cgi error messages if include is used in s.htm
+* Fixed sending ER_TOOSHORT in case of ER_NOQUOTED in searchd
+* Fixed incorrect processing of HTML entities in non-Unicode version
+* Added &Nbsp; entity processing (non-standard but used on some pages)
+* Added update instructions to README
+
+
+10 May 2001: v.1.1.5 (development)
+
+* Implemented support for multibyte encodings (see doc/multibyte.txt)
+* Fixed mysql wordurl[1] tables for UNICODE
+* Fixed <!--noindex--> tag bug in excerpts
+* Fixed "\n" bug in <!--exopen--> tag
+* New file locking (uses either flock or fcntl) - works for Solaris and so on
+* Added template variables $ST (siteId) and $AV (ASPseek version)
+* Fixed Solaris and FreeBSD libs
+* Added "Can not connect to search daemon" error message to s.cgi
+* Improved ranks calculation speed by using mmap()
+
+
+18 Apr 2001: v.1.1.4 (development)
+
+* Added new reverse index storage mode (CompactStorage config parameter)
+* Fixed compilation on Solaris
+* Charset guesser improvements
+* Improved index threads concurrency (index now use second dedicated connection
+  to MySQL to access wordurl[1] tables)
+* Fixed "Cached"/"Text version" link behavior
+* Added ability to pass list of languages in fm= and WordForms
+* Ispell rules with apostrophes are not loaded now
+* Added configure option for fast clone lookup
+* Converted all gif files to png format
+* Added exopen/exclose, hiexopen/hiexclose template sections
+* Fixed lastmod loading in IncrementalCitations mode
+
+
+04 Apr 2001: v.1.1.3 (development)
+
+* Check deltas for corruption feature is restored
+* Fixed bugs in direct and reverse href index calculation
+* Fixed bug in hrefs accounting to URLs set by Server command
+* Buffers of delta files are freed before saving to save memory
+* Fixed bug with "Cached" link
+* Fixed bug in result cache with gr=on
+* Fixed index not following META REFRESH if URL is not in uppercase
+* Fixed few memleaks
+
+
+29 Mar 2001: v.1.1.2 (development)
+
+* Ability to incrementally calculate citations, ranks, lastmod
+* Fixed bug in Unicode version, which can lead to incorrect indexing
+* Optimized internal index caches (improved concurrency)
+* Fixed incorrect searching with pattern (Unicode version)
+* Option to set byte order in wordurl[1].word (Unicode version)
+* Charset guesser improvements
+* Minor cleanup of code, configs and docs
+
+
+22 Mar 2001: v.1.1.1 (development)
+
+* Fixed compilation with --enable-charset-guesser
+* Database libs are now versioned
+* Added smart results cache
+* Fixed displaying some HTML entities in excerpts (UNICODE version)
+* Few czech charsets included
+* Forward-ported 1.0.5 fixes
+
+
+21 Mar 2001: v.1.0.5 (stable)
+
+* File names in configs and program arguments can start with ./ or ../
+* Fixed tmlp= bug in s.cgi (introduced in 1.0.4)
+* Fixed rare bug while searching with st= and spN= parameters
+* Fixed bug when using spN=off
+* FreeBSD compilation fixes
+* Fixed ranks calculation bug (affected relevance)
+* Fixed compilation with --enable-charset-guesser
+* Fixed statistics (output of index -S)
+* Few non-critical memory leaks cured
+* Fixed coredump when using ul= and HTML section filters together
+
+
+15 Mar 2001: v.1.1.0 (development - use for your own risk)
+
+* Added UNICODE support to deal with multiple charsets in one database
+* New database back-end architecture
+   * Developing/adding new DB driver is easy
+   * Needed driver loads at runtime
+* Added support for Oracle8i
+* Added external converters support to deal with any document types
+
+
+13 Mar 2001: v.1.0.4 (stable)
+
+* Fixed bug with robots.txt
+* Fixed processing links with apostrophes
+* Small fixes to INSTALL, searchd.conf, s.htm, Makefiles
+* Searchd binds to loopback if access is allowed only from localhost
+* Fixed HTTP basic authorization support
+* Added s.cgi ability to accept several ul= arguments
+* Fixed processing tags with symbol '>' inside
+* Fixed potential buffer overflows in s.cgi
+* Fixed escaping some SQL queries
+* Fixed ranks reloading
+* Fixed rare searchd coredump when sorting results by date
+* s.cgi now prints charset in Content-Type header (not in META)
+* In case of SQL query error bad query is printed
+
+
+15 Feb 2001: v.1.0.3 (stable)
+
+* SIGINT handler is now the same as SIGTERM in index (so Ctrl-C is safe)
+* Fixed rare searchd coredump in case of searching for two words
+* Fixed s.cgi to process "hiopen" and "hiclose" template sections
+* Moved search error messages to template
+* Added algorithm of making the rank higher if search terms are found
+  near the top of the document (see "ad" parameter of s.cgi and
+  "AccountDistance" in searchd.conf)
+* Fixed s.cgi to determine template file name from SCRIPT_NAME even
+  if there is no QUERY_STRING (some servers don't set empty QUERY_STRING)
+* Fixed robots.txt processing (now they are never marked as deleted)
+* Fixed tiny memory leak in searchd
+* Fixed searchd coredump in LoadRanks (affected Alpha arch)
+* Added automatic detection of unsafe "index" termination on start of
+  next session of "index" and automatic repairing of delta files.
+* Added processing of <!--noindex-->/<!--/noindex--> tags into HTML
+  parser, also "htdig_noindex" and "UdmComment" are supported
+
+
+06 Feb 2001: v.1.0.2 (stable)
+
+* Fixed searchd coredump after telneting to searchd port
+* Fixed aseek-users subscribe instructions
+* Added check for socklen_t, and fix if there's no one
+* Added new items in FAQ
+* "Can't connect" now prints error text not number
+* Fixed navleft in default template
+* Fixed EscapeURL to properly escape queries
+* Improved configure (stop if compress() not found)
+* Fixed DebugLevel bug (affected s.cgi)
+* Avoided one more compiler -O2 bug
+* Added more charsets (cp1250 cp1253 iso8859-13 iso8859-4 iso8859-5 iso8859-9)
+* Added turkish stopword file
+* Added $QF meta symbol
+* Added ability to run search query on other engines (in s.htm)
+
+
+24 Jan 2001: v.1.0.1 (stable)
+
+* Fixed SEGV in searchd when WordForms together with ul were used
+* Tried to avoid some nasty -O2 problems (read FAQ for details)
+* Added "Port" command description in searchd.conf
+* Added FAQ file
+* Added note about anonymous CVS access in INSTALL
+
+
+18 Jan 2001: v.1.0.0 (stable)
+
+* Few bugfixes (including index coredump)
+* IP-based ACL for searchd
+* Sorting results by date
+* Limit results to given time period
+* Default template fixes
+* Porting to more platforms (in progress)
+
+
+05 Jan 2001: v.0.9.9 (development)
+
+* First public beta release

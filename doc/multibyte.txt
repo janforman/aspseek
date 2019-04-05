@@ -1,0 +1,24 @@
+Search in Chinese, Japanese and Korean languages
+================================================
+
+Since version 1.1.5 ASPseek is able to index and search documents written
+in language with multibyte characters, such as Chinese, Japanese and Korean.
+
+As words in these languages are not delimited by spaces or punctuation signs,
+documents in this languages can't be indexed in the same way as others,
+because there is no way to break the sentence into separate words. To extract
+words from sentence, ASPseek uses dictionaries for each language. ASPseek
+always extract longest matching words from sentence, which match words in
+dictionary.
+
+To force indexing and searching of these documents use directives
+"CharsetTableU2" and "Dictionary2" in "ucharset.conf" (provided by including
+it in "aspseek.conf" and "searchd.conf"). See "ucharset.conf-dist" for details.
+Also use one of the following values for charset of search page and "cs"
+parameter of "s.cgi": utf-8, big5, gb2312. Of course, ASPseek should be
+compiled with --enable-unicode option to configure.
+
+Currently ASPseek package contains only Chinese dictionary of about 130000
+words and charset definition files for Big5 and Gb2312 encodings.
+We appreciate if someone will send us dictionaries for Japanese and Korean
+languages.

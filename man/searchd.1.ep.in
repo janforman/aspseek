@@ -1,0 +1,56 @@
+.\" $Id: searchd.1.ep.in,v 1.10 2004/03/22 17:36:20 kir Exp $
+.\" @configure_input@
+.TH searchd 1 "$Date: 2004/03/22 17:36:20 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+searchd \- search daemon
+.SH SYNOPSIS
+\fBsearchd\fR \fB-D\fR [\fB-R\fR] [\fB-l\fR \fIlogfile\fR] [\fIconfigfile\fR]
+.PP
+\fBsearchd\fR \fB-h\fR
+.SH DESCRIPTION
+\fBsearchd\fR is a search daemon. Its purpose in ASPseek is to search the
+database created by \fBindex\fR(1), cache search results etc.
+It listens on a port for \fBs.cgi\fR(1) queries, does the search and returns
+results found to \fBs.cgi\fR(1).
+.PP
+\fBsearchd\fR loads some data from the database to memory to speed up
+search. If that data is changed on disk, \fBsearchd\fR reloads it.
+.SH OPTIONS
+.IP \fB-D\fR 10
+is used to run \fBsearchd\fR as a daemon. You need it every time you run
+\fBsearchd\fR.
+.IP \fB-R\fR 10
+is used to auto-restart \fBsearchd\fR in case of its failure. So using this
+option you will get non-stop search engine.
+.IP \fB-F\fR 10
+is used when you want to run \fBsearchd\fR with process monitoring
+tools like \fBdaemontools\fR. With this option \fBsearchd\fR will not daemonize
+and stay in the foreground.
+.IP "\fB-l\fR \fIlogfile\fR" 10
+sets that \fBsearchd\fR should write its log into specified \fIlogfile\fR.
+By default log is written into \f(CW@sysconfdir@/dlog.log\fR.
+.IP \fB-h\fR 10
+is used to get a help message from \fBsearchd\fR.
+.IP \fIconfigfile\fR 10
+is the name of configuration file to be read.
+Default is \f(CW@sysconfdir@/searchd.conf\fR.
+.SH FILES
+\f(CW@sysconfdir@/searchd.conf\fR
+.br
+\f(CW@localstatedir@/dlog.log\fR
+.SH BUGS
+If you try to start \fBsearchd\fR, but the port used by it is already in use
+by another program (most probably another \fBsearchd\fR), you will not get
+error message to console, only to log file. So every time before trying to
+start \fBsearchd\fR check that there's no \fBsearchd\fR running, and kill it
+if necessary. Or, after starting \fBsearchd\fR, check the log file for errors.
+.SH SEE ALSO
+.BR index (1),
+.BR s.cgi (1),
+.BR searchd.conf (5),
+.BR aspseek-sql (5),
+.BR http://cr.yp.to/daemontools.html .
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002, 2004 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>

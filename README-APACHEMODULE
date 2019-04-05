@@ -1,0 +1,60 @@
+ASPseek Apache module, by Ivan Gudym (ignite@ukr.net)
+
+1.Installation
+
+Configure ASPseek to support Apache module, this is done by passing
+--enable-apache-module flag to configure script. After that do regular
+"make" to create binaries. In addition to "index", "searchd' and "s.cgi",
+"mod_aspseek.so" shared library will be created. Do "make install" as usual,
+and module will be installed to the appropriate place. Then, you need to
+activate the module in httpd.conf file, this is done by adding the lines
+like these:
+
+LoadModule aspseek_module       modules/mod_aspseek.so
+AddModule mod_aspseek.c
+<IfModule mod_aspseek.c>
+    <Location /aspseek>
+		SetHandler aspseek
+		ASPseekTemplate /usr/local/aspseek/etc/s.htm
+    </Location>
+</IfModule>
+
+ASPseekTemplate configuration directive can be placed outside 'Directory'
+or 'Location' scope - to specify server-wide template, or inside them - to
+specify location specific template. Please make sure that the user under
+which apache daemon is running have access to that file.
+
+Restart Apache by '/etc/init.d/httpd restart' and try aspseek module by
+typing 'http://localhost/aspseek/' in your browser.
+
+2. Benchmark
+I am interesting, is it useful to have Apache module rather then CGI
+program. So I perform two simple tests with 'ab' program from Apache
+distribution. One to send 100 requests with concurrent 10 of it, and
+second - 1000 requests with concurrent 100. Here command strings:
+1)	/usr/sbin/ab -n 100 -c 10 http://localhost/aspseek?q=www
+	/usr/sbin/ab -n 100 -c 10 http://localhost/cgi-bin/s.cgi?q=www
+2)	/usr/sbin/ab -n 1000 -c 100 http://localhost/aspseek?q=www
+	/usr/sbin/ab -n 1000 -c 100 http://localhost/cgi-bin/s.cgi?q=www
+
+In my Red Hat 7.0 on Celeron 667 with 128 RAM I took such results:
+1)
+	| Mod	| CGI	| Diff,%
+--------+-------+-------+----------
+Time,s	| 28.8	| 33.9	| 15%
+Req/s	| 3.47	| 2.94	|
+
+2)
+	| Mod	| CGI	| Diff,%
+--------+-------+-------+----------
+Time,s	| 268.3	| 538.2	| 51%
+Req/s	| 3.73	| 1.86	|
+
+In addition, while performing second test for CGI, one s.cgi process was
+killed by kernel.
+
+So resume: in low load it is efficient and more safe to use CGI program,
+in heavy load better choice is the Apache module.
+
+20001-12-09
+Ivan Gudym (ignite@ukr.net)

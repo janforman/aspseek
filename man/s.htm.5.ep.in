@@ -1,0 +1,544 @@
+.\" $Id: s.htm.5.ep.in,v 1.20 2002/10/21 20:08:44 kir Exp $
+.\" @configure_input@
+.TH s.htm 5 "$Date: 2002/10/21 20:08:44 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+s.htm \- template and configuration for s.cgi
+.SH SYNOPSIS
+\f(CW@sysconfdir@/s.htm\fR
+.SH DESCRIPTION
+\fBs.htm\fR acts both as a configuration file and as a HTML template for
+\fBs.cgi\fR(1). It looks like HTML file, and is divided into sections.
+\fBs.cgi\fR(1) takes some sections, makes meta variables substitution
+in them, and outputs the resulting HTML.
+.PP
+Section is a piece of \fBs.htm\fR file that is started with line
+\f(CW<!--sectionname-->\fR and ends with line \f(CW<!--/sectionname-->\fR.
+Section consists of HTML formatted text containing meta variables.
+Meta variable is one or two letters preceded by $ sign (example: $DX).
+Meta variable names are case-sensitive.
+\fBs.cgi\fR(1) substitutes meta variables with corresponding string.
+.SS Special ``variables'' section
+This is a special section in which you define various configuration
+parameters in the form "\fBParameter\fR \fIvalue\fR".
+Unlike all the other sections, it starts with the string
+\f(CW<!--variables\fR and ends with \f(CW-->\fR. The contents of this
+section is never included in \fBs.cgi\fR(1) output.
+.PP
+The following parameters are defined here.
+.IP "\fBDaemonAddress\fR \fIxxx.xxx.xxx.xxx\fR[:\fInnn\fR]"
+Defines the IP address (\fIxxx.xxx.xxx.xxx\fR) and port
+(\fInnn\fR) of search daemon \fBsearchd\fR(1). If port is
+not set, ASPseek's default port is used.
+
+You \fIshould\fR put at least one \fBDaemonAddress\fR. You \fIcan\fR
+put several \fBDaemonAddress\fR lines; in this case \fBs.cgi\fR(1)
+will connect to all \fBsearchd\fR(1) daemons, retrieve results from
+all of it, and show merged results.
+
+Note that you can't give DNS names (like \fBwww.myhost.com\fR) as an
+argument to \fBDaemonAddress\fR, only numeric IP addresses are allowed
+here. This is done because name lookup needed in case of DNS name
+will slow down \fBs.cgi\fR(1) considerably.
+.IP "\fBMaxExcerpts\fR \fInum\fR"
+Defines the maximum number of excerpts that are shown in results.
+.IP "\fBMaxExcerptLen\fR \fInum\fR"
+Defines the maximum length (in characters) of each excerpt string.
+.IP "\fBPagesPerScreen \fInum\fR"
+Defines the maximum number of links to other search result pages
+to be shown if there are many results found.
+.IP "\fBResultsPerPage\fR \fInum\fR"
+Defines how many results will be shown on one page.
+Note that this value is overwritten by \fBPS\fR cookie if set,
+and \fBps\fR parameter to \fBs.cgi\fR(1). Less value makes search results
+page to appear faster, so don't set it too high.
+.IP "\fBClones\fR \fIno\fR"
+If this line is present, clones detecting and showing is disabled.
+.PP
+You can also redefine error messages that are used in cases \fBs.cgi\fR(1)
+encounters an error. The following error messages are used.
+.IP "\fBER_STOPWORDS\fR \fIstring\fR"
+Displayed if only stopwords are used in query.
+.IP "\fBER_EXTRASYMBOL\fR \fIstring\fR"
+Displayed if some extra symbols were found at the end of query.
+.IP "\fBER_EMPTYQUERY\fR \fIstring\fR"
+Displayed if the query is empty.
+.IP "\fBER_TOOSHORT\fR \fIstring\fR"
+Displayed if the pattern is used, and not enough characters are provided
+in it. See also the description of \fBMinFixedPatternLength\fR parameter
+in \fBsearchd.conf\fR(5).
+.IP "\fBER_NOQUOTED\fR \fIstring\fR"
+Displayed if unmatched quote was found.
+.IP "\fBER_NOPARENTHESIS\fR \fIstring\fR"
+Displayed if unmatched parenthesis was found.
+.IP "\fBER_NOSEARCHD\fR \fIstring\fR"
+Displayed if \fBs.cgi\fR(1) was unable to connect to \fBsearchd\fR(1).
+.SH META VARIABLES
+Meta variables described here are \fBnot\fR position-dependent, that is to say
+they can be used in any template sections. Variables that can be used only
+in some sections described in the \fBTEMPLATE SECTIONS\fR below.
+.IP \fB$$\fR
+This is actually not a meta variable, but a way to include $ sign to
+\fBs.cgi\fR(1) output. So, if you want to put a \fI$\fR in template,
+write it as \fI$$\fR.
+.IP \fB$AV\fR
+ASPseek version (like @VERSION@).
+.IP \fB$P\fR
+String "\fI&tmpl=\fR" concatenated with value of \fBtmpl\fR parameter of
+\fBs.cgi\fR(1), URL-escaped, or empty string if there was no \fBtmpl\fR
+parameter given.
+.IP \fB$c\fR
+Current value of \fBcs\fR (charset) parameter of \fBs.cgi\fR(1). Works
+only in Unicode version.
+.IP \fB$f\fR
+Number of first document displayed on this page.
+.IP \fB$fm\fR
+Current value of \fBfm\fR (word forms) parameter of \fBs.cgi\fR(1).
+.IP \fB$ps\fR
+Current value of \fBps\fR (results per page) parameter of \fBs.cgi\fR(1).
+.IP \fB$s\fR
+Current value of \fBs\fR (sorting type) parameter of \fBs.cgi\fR(1).
+Can be either \fIrate\fR or \fIdate\fR.
+.IP \fB$np\fR
+Current value of \fBnp\fR (page number) parameter of \fBs.cgi\fR(1).
+.IP \fB$gr\fR
+Current value of \fBgr\fR (grouping by site) parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$ad\fR
+Current value of \fBad\fR ("account distance") parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$bd\fR
+Current value of \fBbd\fR (search in body) parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$ds\fR
+Current value of \fBds\fR (search in description) parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$kw\fR
+Current value of \fBkw\fR (search in keywords) parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$tl\fR
+Current value of \fBtl\fR (search in title) parameter of \fBs.cgi\fR(1).
+Can be either \fIon\fR or \fIoff\fR.
+.IP \fB$CC\fR
+Template section \fBcached\fR if document is text/html or text/plain, or
+template section \fBtextversion\fR if document was converted from other
+format.
+.IP \fB$DB\fR
+Document size in kilobytes.
+.IP \fB$DC\fR
+Document Content-type (like \fItext/html\fR).
+.IP \fB$DD\fR
+Document description (taken from META DESCRIPTION tag).
+.IP \fB$DE\fR
+URL-escaped document URL. Useful for building "cached link".
+.IP \fB$DK\fR
+Document keywords (taken from META KEYWORDS tag).
+.IP \fB$DM\fR
+Document Last-Modified date.
+.IP \fB$DN\fR
+Document number (in order of appearance).
+.IP \fB$DS\fR
+Document size in bytes.
+.IP \fB$DT\fR
+Document title.
+.IP \fB$DR\fR
+Document rating (as calculated by \fBASPseek\fR).
+.IP \fB$DU\fR
+Document URL, unescaped.
+.IP \fB$DX\fR
+Document text. If excerpts are enabled and found, several excerpts from URL
+content, otherwise the first couple of lines, to give an idea of what the
+document is about.
+.IP \fB$DZ\fR
+Contents of template section \fBsizeb\fR if document size is less than 1024,
+otherwise contents of template section \fBsizek\fR.
+.IP \fB$l\fR
+Number of last document displayed on this page.
+.IP \fB$t\fR
+Total number of documents found.
+.PP
+Search statistics
+.IP \fB$W\fR
+Information about the number of word forms found. For example, if query was
+'html template', $W can be something like 'html: 10/20  template: 20/30'
+where first number is the URL count and second number is the total count).
+You can use \fB$W\fR only in \fBrestop\fR section.
+.IP \fB$Y\fR
+Total time spent to perform query.
+.PP
+The following meta variables gets substituted by corresponding template
+sections, if some conditions are met.
+.IP \fB$w\fR
+Contents of \fBinres\fR template section if more than one result is found.
+\fBinres\fR template section should define either checkbox "Search within
+results" or link to "search within results" page.
+.IP \fB$V\fR
+Contents of \fBnavigator\fR template section, if more than one page of
+results are found, otherwise empty.
+.IP \fB$M\fR
+.IP \fB$M\fR\fIn\fR
+Contents of \fBmoreurls\fR template section, if grouping by sites is enabled
+and more than \fIn\fR results are found from the site, where \fIn\fR is
+number following \fB$M\fR, usually 2. If \fIn\fR is not specified, it is
+set to 1.
+.IP \fB$R\fR
+Contents of \fBressites\fR section, if more that one site is found; otherwise
+contents of \fBresurls\fR section.
+.PP
+Navigator is a piece of HTML code used for presenting links to other search
+result pages. The following variables are used.
+.IP \fB$NL\fR
+Contents of \fBnavleft\fR section, if current page > 0, otherwise
+contents of \fBnavleft0\fR section.
+.IP \fB$NB\fR
+Contents of \fBnavbar1\fR template section, repeated \fIpages per screen\fR
+times. For page number equal to current, contents of \fBnavbar0\fR section
+is printed instead.
+.IP \fB$NR\fR
+Contents of \fBnavright\fR section, if this page is not last one, otherwise
+contents of \fBnavright0\fR section.
+.IP \fB$NH\fR
+URL of the another results page, used as a value for "<A HREF" in
+\fBnavleft\fR and \fBnavright\fR sections.
+.IP \fB$NP\fR
+Number of page, useful in \fBnavleft*\fR, \fBnavbar*\fR and \fBnavright*\fR
+sections.
+.IP \fB$E\fR
+Text of error message. See description of \fBvariables\fR section for info
+about error messages.
+.SH TEMPLATE SECTIONS
+.TP
+\fBtop\fR
+This section is included first on every page. So, you should begin this
+section with standard HTML preamble: \f(CW<HTML><HEAD>...\fR and so on.
+Here in this section you also provide search form.
+.PP
+The following meta variables are used:
+.IP \fB$Q\fR
+HTML-escaped search query.
+.IP \fB$QF\fR
+URL-escaped search query, concatenated with previous query if search was made
+within results).
+.IP \fB$q\fR
+The same as \fB$QF\fR if it is encountered in one of \fBres*\fR section,
+otherwise HTML-escaped search query, concatenated with previous query if
+search was made within results).
+.IP \fB$A\fR
+Argument for FORM ACTION tag with host name and protocol
+(example: \f(CWhttp://www.aspseek.com/cgi-bin/s.cgi\fR).
+.PP
+Example:
+.nf
+\f(CW<!--top-->
+<HTML>
+<HEAD>
+\ <TITLE>ASPseek: $Q</TITLE>
+</HEAD>
+<BODY>
+<FORM METHOD=GET ACTION="$A">
+\ Search for: <INPUT TYPE="text" NAME="q" SIZE=30 VALUE="$Q">
+\ <INPUT TYPE="submit" VALUE="Search"><BR>
+\ <INPUT TYPE="submit" NAME="t" VALUE="Take me there">
+</FORM>
+<!--/top-->
+.fi
+\fR
+.IP \fBbottom\fR
+This section is always comes last in every page. So you should provide
+all the closing tags which have their counterparts in \fBtop\fR section.
+Although it is not obligatory to place this section at the end of
+template file, but doing so will help you to view your template as an
+ordinary HTML file in a browser to get the idea how it is looks like.
+.PP
+Example:
+.nf
+\f(CW<!--bottom-->
+</BODY>
+</HTML>
+<!--/bottom-->
+.fi
+\fR
+.IP \fBrestop\fR
+This section is included just before the search results. It's not a bad
+idea to provide some common search results in this section.
+You can do so by using the following meta variables: \fB$f\fR, \fB$l\fR,
+\fB$t\fR, \fB$W\fR.
+.PP
+Example:
+.nf
+\f(CW<!--restop-->
+<TABLE BORDER=0 WIDTH=100%>
+<TR>
+<TD><small>Matches $f-$l of total <B>$t</B>&nbsp;&nbsp;
+Search took $Y seconds.</TD>
+<TD><small>$W</small></TD>
+</TR>
+</TABLE>
+<!--/restop-->
+.fi
+\fR
+.IP \fBres\fR
+.IP \fBres2\fR
+These sections are used for displaying various information about every
+found document. \fBres\fR is used to display first document for each found
+site or for all documents is only 1 site is found (or grouping by sites is
+off). \fBres2\fR is used to display second document for each site
+if more than 1 site is found.
+.PP
+The following meta variables are used: \fB$D*\fR (where \fB*\fR is any
+character), \fB$CC\fR, \fB$CL\fR.
+.PP
+Example:
+.nf
+\f(CW<!--res-->
+<DL><DT>
+<b>$DN.</b><a href="$DU" TARGET="_blank"><b>$DT</b></a>
+[<b>$DR</b>]<DD> $DX...<BR>
+<b>URL: </b><A HREF="$DU" TARGET="_blank">$DU</A>($DC)<BR>
+$DM, $DS bytes<BR>
+<b>Description: </b>$DD<br>
+<b>Keywords: </b>$DK<br>
+</DL>
+<UL>
+$CL
+</UL>
+<!--/res-->
+.fi
+\fR
+.IP \fBmoreurls\fR
+This section is displayed when more than 1 or 2 URLs is found
+on particular site (and grouping by sites is on). It is displayed in
+result just instead of $M2, $M1 or $M meta variables. The following
+parameters are used in this section:
+.IP \fB$SS\fR
+URL of home page of site of found document.
+.IP \fB$SH\fR
+URL to get more results from this site.
+.IP \fB$SC\fR
+Total number of documents found on this site.
+.IP \fBressites\fR
+This section is displayed in case more than one site is found. See description
+of \fB$R\fR.
+.PP
+Example:
+.nf
+\f(CW<!--ressites-->
+Displaying sites $f-$l of total <B>$t</B> found.
+<!--/ressites-->
+.fi
+\fR
+.IP \fBresurls\fR
+This section is displayed in case only one site is found. See description
+of \fB$R\fR.
+.PP
+Example:
+.nf
+\f(CW<!--resurls-->
+Displaying documents $f-$l of total <B>$t</B> found on site $SS.
+<!--/resurls-->
+.fi
+\fR
+.SS Excerpts and cached copy highlighting
+It is very convenient for user to have query words highlighted in search result
+excerpt and in cached copy. This is done using several sections.
+.PP
+.IP \fBhiopen\fR
+.IP \fBhiclose\fR
+Used to to highlight the words in "cached" copy. Contents of these sections
+are printed before and after the found word.
+.IP \fBhiexopen\fR
+.IP \fBhiexclose\fR
+Used in displaying excerpts, works the same was as \fBhiopen\fR and
+\fBhiclose\fR.
+.IP \fBexopen\fR
+.IP \fBexclose\fR
+Contents of this sections are displayed just before and after each excerpt
+found.
+.IP \fBhicolors\fR
+Each line of this section should contain value of color for each search
+term. Value of color is taken from line with number equal to N mod C,
+where N is the search term sequential number and C is the total number
+of lines in this section.
+.PP
+The following meta variables are used:
+.IP \fB$H\fR
+String value of color to highlight, taken from "hicolors" templates section.
+.PP
+Below is an example of highlighting-related sections.
+.nf
+\f(CW<!--hiopen-->
+<B style="color:black;background-color:#$H">
+<!--/hiopen-->
+<!--hiclose-->
+</B>
+<!--/hiclose-->
+<!--hiexopen-->
+<B>
+<!--/hiexopen-->
+<!--hiexclose-->
+</B>
+<!--/hiexclose-->
+<!--exopen-->
+<br>...
+<!--/exopen-->
+<!--exclose-->
+\ ...
+<!--/exclose-->
+<!--hicolors-->
+ffff66
+ff66ff
+66ffff
+ff6666
+6666ff
+66ff66
+<!--/hicolors-->
+.fi
+\fR
+.PP
+.SS Clones
+Clones are HTML documents with the same contents. \fBASPseek\fR found such
+documents by comparing calculated MD5 checksums.
+.PP
+The following meta variables are used:
+.IP \fB$CL\fR
+List of clones.
+.SS "Cached" pages
+The following section names are used to customize the appearance of "cached"
+pages (e.g. the pages with page contents stored in ASPseek's database).
+.IP \fBcachetop\fR
+This section is included first on every "cached" page. The following meta
+variables can be used: \fB$DU\fR.
+.SS Displaying error messages
+The following template sections are used to display various error messages.
+.IP \fBnotfound\fR
+As its name implies, this section is displayed in case when
+no documents are found. You usually give a little message saying that
+and maybe some hints how to make search less restrictive.
+.PP
+Below is an example of notfound section:
+.nf
+\f(CW<!--notfound-->
+Sorry, but search hasn't returned results.<P>
+<I>Try to produce less restrictive search query,
+or check words spelling</I>.
+<!--/notfound-->
+.fi
+\fR
+.IP \fBerror\fR
+This section is displayed in case some internal error occurred while
+searching. See the list of errors in description of \fBvariables\fR section.
+Use the \fB$E\fR meta variable to print error message text.
+.PP
+Example of error section:
+.nf
+\f(CW<!--error-->
+<FONT COLOR="#FF0000">An error occurred.</FONT><P>
+<B>$E</B>
+<!--/error-->
+.fi
+\fR
+.IP \fBqueryerror\fR
+This section is displayed in case if query contains error
+like unmatched quote or parenthesis. You should use \fB$E\fR meta variable
+here.
+.PP
+Example of error section:
+.nf
+\f(CW<!--queryerror-->
+<FONT COLOR="#FF0000">Error in query: $E</FONT><P>
+<B>$E</B>
+<!--/queryerror-->
+.fi
+\fR
+.IP \fBcomplexPhrase\fR
+This section is displayed in case if boolean expression is used inside
+phrase. Intended just to warn user, and probably give some hints.
+.IP \fBcomplexExpression\fR
+This section is displayed in case if boolean expression
+is used in query. Intended just to warn user, and probably give some hints.
+.SS Including a file into template
+.IP \fBinclude\fR\ \fIfilename\fR
+If line \f(CW<!--include filename -->\fR is encountered, then \fBASPseek
+starts loading template definitions from file, specified by \fIfilename\fR,
+then resumes processing of current file. Example of use: if two or more
+template definitions differ only in \fBtop\fR and \fBbottom\fR sections,
+then create one file with sections other than \fBtop\fR and \fBbottom\fR,
+then create two different files with \fBtop\fR and \fBbottom\fR sections.
+.SS Special OPTION SELECTED substitutions
+In order to save the value for option user selected across the different
+search result pages, the following "selected magic" hack is used.
+\fBs.cgi\fR(1) scans the template for all of <OPTION> tags in <SELECT>
+which do have attribute \fBSELECTED\fR followed by \fB=\fR sign and some
+value, and removes all of the \fBSELECTED\fR fields with the attribute
+different of that in \fBVALUE\fR.
+.PP
+In the following example the string \f(CWSELECTED\fR will only be presented
+in line that have its \f(CWVALUE\fR equal to value of \fB$ps\fR meta variable.
+.nf
+\f(CW<SELECT NAME="ps">
+<OPTION VALUE="10" SELECTED="$ps">10
+<OPTION VALUE="20" SELECTED="$ps">20
+<OPTION VALUE="50" SELECTED="$ps">50
+</SELECT>
+.fi
+\fR
+.SS Defining different output formats
+You can have several section with the same name in template. Normally,
+the first encountered section is used. This behavior can be overridden by
+supplying \fBo\fR=\fIn\fR parameter to \fBs.cgi\fR(1). If value of \fIn\fR
+is more than zero, then "\fIn\fR+1"th sections are used. If number of
+occurrences of particular section is less then value of "\fIn\fR+1", then
+last section with the needed name is used.
+.PP
+The following meta variables are used:
+.IP \fB$o\fR
+Substituted with the current value of \fBo\fR parameter of \fBs.cgi\fR(1).
+.SS User-defined template sections
+Besides the standard template sections, user-defined sections can be used.
+\fBs.cgi\fR(1) treats line \f(CW<!--sectionname-->\fR as the start of
+user-defined template section and line \f(CW<!--/sectionname-->\fR as the
+end of user-defined template. Note that name of section must begin with
+alphanumeric character, otherwise this line is treated as regular HTML
+comment belonging to the current template section, so it is important to
+put space after "<!--" in comments.
+.PP
+User-defined templates can be used
+from other templates with the following meta variable.
+.IP \fB$T\fR\fIsectionname\fR
+Gets substituted with user-defined template section named \fIsectionname\fR.
+.SS Random number generation
+This is a feature of \fBs.cgi\fR(1) that allows you to include random numbers
+to resulting HTML, for example in order to get a random banner. Numbers are
+generated in the range [0; \fImax\fR], where \fImax\fR is equal to value of
+\fBRandom\fR\fIN\fR=\fImax\fR in \fBvariables\fR section (see above). So, you put
+meta variable \fB$r\fR\fIN\fR, which will be substituted to generated random
+number. \fIN\fR should be in the range 0...127, that means you can use up to
+128 different random number variables.
+.PP
+In the example below \fB$r1\fR will be substituted with random number in the range
+from 0 to 100, \fB$r2\fR - from 0 to 500.
+.PP
+.nf
+\f(CW<!--variables
+\ ....
+Random1=100
+Random2=500
+-->
+\ ....
+<A HREF="http://www.my.com/click?id=$r1"><IMG
+SRC=http://www.my.com/getbanner.cgi?id=$r1></A>
+<A HREF="http://www.other.com/url?n=$r2"><IMG
+SRC=http://www.other.com/pic?n=$r2></A>
+\ ....
+.fi
+\fR
+.SH BUGS
+This documentation is incomplete. Not all variables can be used in all
+template sections. If you are unsure or see some strange misbehavior,
+consult the source code (file \f(CWtemplates.cpp\fR).
+.SH SEE ALSO
+.BR s.cgi (1),
+.BR aspseek (7).
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>

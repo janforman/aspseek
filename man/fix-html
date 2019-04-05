@@ -1,0 +1,32 @@
+#!/bin/bash
+
+NOMANS="strptime.3 strftime.3 regex.7 grep.1 awk.1 sed.1"
+
+EDCMD=
+for M in $NOMANS; do
+	NAME=`echo $M | sed 's/\.[1-9]//'`
+	SECT=`echo $M | sed 's/[^1-9]//g'`
+	FR="<B><A HREF=\"${M}.php\">${NAME}</A></B>(${SECT})"
+	TO="<B>${NAME}</B>(${SECT})"
+#	echo "$FR -> $TO"
+	EDCMD="${EDCMD},s#${FR}#${TO}#g\n"
+done
+EDCMD="${EDCMD}wq\n"
+
+#echo -e "EDCMD=$EDCMD"
+
+for F in $*; do
+#	echo "Fixing $F"
+	NAME=`echo $F | sed 's/\.php$//'`
+	sed -e "1,5d" -e "7d" -e "s/&nbsp;//g" -e 's//"/g' -e \
+	's|<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,|man2html|g' \
+	-e '6s/.*)<BR>//' $F > $F.tmp
+	echo -e "<?php \$title=\"${NAME} Manual Page\";\n" \
+	"require('../header.inc');?>\n<div id=main>\n" > $F
+	cat $F.tmp >> $F
+	sed -e 's#</BODY>#</div>#' -e "s#</HTML>#<?php require('../footer.inc'); ?>#" < $F > $F.tmp
+	sed 's@<A HREF="http://localhost/cgi-bin/man/man2html?\(.\)+\([a-z.-]*\)">@<A HREF="\2.\1.php">@g' $F.tmp > $F
+	rm -f $F.tmp
+	echo -e "$EDCMD" | ed -s $F > /dev/null 2>&1
+done
+exit 0

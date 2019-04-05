@@ -1,0 +1,488 @@
+DROP TABLE IF EXISTS `citation`;
+CREATE TABLE `citation` (
+  `url_id` int(11) NOT NULL default '0',
+  `referrers` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `countries`;
+CREATE TABLE `countries` (
+  `country` varchar(20) default NULL,
+  `addr` int(10) unsigned NOT NULL default '0',
+  `mask` int(10) unsigned NOT NULL default '0',
+  `expires` int(11) NOT NULL default '0',
+  UNIQUE KEY `addr` (`addr`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `rescache`;
+CREATE TABLE `rescache` (
+  `qkey` int(10) unsigned NOT NULL default '0',
+  `urls` longblob,
+  UNIQUE KEY `qkey` (`qkey`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `robots`;
+CREATE TABLE `robots` (
+  `hostinfo` varchar(127) NOT NULL default '',
+  `path` varchar(127) NOT NULL default '',
+  KEY `hostinfo` (`hostinfo`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `sites`;
+CREATE TABLE `sites` (
+  `site_id` int(11) NOT NULL auto_increment,
+  `site` varchar(128) NOT NULL default '',
+  PRIMARY KEY  (`site_id`),
+  UNIQUE KEY `site` (`site`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `spaces`;
+CREATE TABLE `spaces` (
+  `space_id` int(11) NOT NULL default '0',
+  `site_id` int(11) NOT NULL default '0',
+  KEY `space_id` (`space_id`,`site_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `stat`;
+CREATE TABLE `stat` (
+  `addr` varchar(128) default NULL,
+  `proxy` varchar(128) default NULL,
+  `query` varchar(255) default NULL,
+  `ul` varchar(255) default NULL,
+  `sp` varchar(255) default NULL,
+  `site` int(11) default NULL,
+  `np` smallint(6) default NULL,
+  `ps` tinyint(3) unsigned default NULL,
+  `sites` int(11) default NULL,
+  `urls` int(11) default NULL,
+  `start` decimal(15,3) default NULL,
+  `finish` decimal(15,3) default NULL,
+  `referer` varchar(255) default NULL
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `subsets`;
+CREATE TABLE `subsets` (
+  `subset_id` int(11) NOT NULL auto_increment,
+  `mask` varchar(128) NOT NULL default '',
+  PRIMARY KEY  (`subset_id`),
+  UNIQUE KEY `mask` (`mask`)
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `tmpurl`;
+CREATE TABLE `tmpurl` (
+  `url_id` int(11) NOT NULL default '0',
+  `thread` int(11) NOT NULL default '0'
+) ENGINE=MyISAM DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlword`;
+CREATE TABLE `urlword` (
+  `url_id` int(11) NOT NULL auto_increment,
+  `site_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `url` varchar(128) NOT NULL default '',
+  `next_index_time` int(11) NOT NULL default '0',
+  `status` smallint(6) NOT NULL default '0',
+  `crc` varchar(32) NOT NULL default '',
+  `last_modified` varchar(32) NOT NULL default '',
+  `etag` varchar(48) NOT NULL default '',
+  `last_index_time` int(11) NOT NULL default '0',
+  `referrer` int(11) NOT NULL default '0',
+  `tag` int(11) NOT NULL default '0',
+  `hops` tinyint(3) unsigned NOT NULL default '0',
+  `redir` int(11) default NULL,
+  `origin` tinyint(3) unsigned default NULL,
+  PRIMARY KEY  (`url_id`),
+  UNIQUE KEY `url` (`url`),
+  KEY `next_index_time` (`next_index_time`),
+  KEY `hops` (`hops`,`next_index_time`),
+  KEY `crc` (`origin`,`site_id`,`crc`(8))
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords00`;
+CREATE TABLE `urlwords00` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords01`;
+CREATE TABLE `urlwords01` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords02`;
+CREATE TABLE `urlwords02` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords03`;
+CREATE TABLE `urlwords03` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords04`;
+CREATE TABLE `urlwords04` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords05`;
+CREATE TABLE `urlwords05` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords06`;
+CREATE TABLE `urlwords06` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords07`;
+CREATE TABLE `urlwords07` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords08`;
+CREATE TABLE `urlwords08` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords09`;
+CREATE TABLE `urlwords09` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords10`;
+CREATE TABLE `urlwords10` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords11`;
+CREATE TABLE `urlwords11` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords12`;
+CREATE TABLE `urlwords12` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords13`;
+CREATE TABLE `urlwords13` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords14`;
+CREATE TABLE `urlwords14` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `urlwords15`;
+CREATE TABLE `urlwords15` (
+  `url_id` int(11) NOT NULL default '0',
+  `deleted` tinyint(4) NOT NULL default '0',
+  `wordcount` smallint(5) unsigned default NULL,
+  `totalcount` mediumint(8) unsigned default NULL,
+  `content_type` varchar(48) NOT NULL default '',
+  `charset` varchar(32) NOT NULL default '',
+  `title` varbinary(128) NOT NULL default '',
+  `txt` varbinary(255) NOT NULL default '',
+  `docsize` int(11) NOT NULL default '0',
+  `keywords` varchar(255) NOT NULL default '',
+  `description` varbinary(100) NOT NULL default '',
+  `lang` varchar(2) NOT NULL default '',
+  `words` longblob,
+  `hrefs` longblob,
+  UNIQUE KEY `url_id` (`url_id`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary MAX_ROWS=100000000;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `wordsite`;
+CREATE TABLE `wordsite` (
+  `word` varchar(32) NOT NULL default '',
+  `sites` longblob,
+  UNIQUE KEY `word` (`word`)
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `wordurl`;
+CREATE TABLE `wordurl` (
+  `word` tinyblob NOT NULL,
+  `word_id` int(11) NOT NULL auto_increment,
+  `urls` blob,
+  `urlcount` int(11) default NULL,
+  `totalcount` int(11) default NULL,
+  PRIMARY KEY  (`word_id`),
+  UNIQUE KEY `word` (`word`(64))
+) ENGINE=MyISAM PACK_KEYS=1 DEFAULT CHARSET=binary;
+
+-- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `wordurl1`;
+CREATE TABLE `wordurl1` (
+  `word` tinyblob NOT NULL,
+  `word_id` int(11) NOT NULL auto_increment,
+  `urls` blob,
+  `urlcount` int(11) default NULL,
+  `totalcount` int(11) default NULL,
+  UNIQUE KEY `word_id` (`word_id`),
+  UNIQUE KEY `word` (`word`(64))
+) ENGINE=MyISAM DEFAULT CHARSET=binary;

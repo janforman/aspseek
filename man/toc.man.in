@@ -1,0 +1,36 @@
+.\" .sp 10v
+.\" .PSPIC aspseek.eps
+.nh \" no hyphenation
+.ls 4 \" line spacing
+.ad c \" centered
+.br
+.sp 20v
+.ps +10 \" point size
+.fam H \" helvetica
+\fBASPseek User's Guide\fR
+.br
+.ps -6
+\fICopyright (C) 2001, 2002 by SWsoft.\fR
+.fam T
+.br
+.sp 12v
+.ad l
+.ps +2
+Table of Contents
+.br
+.ta 6iR
+.ls 3
+.tc
+.ps -2
+Name 	 Page
+.br
+.ps -1
+.ls 2
+.tc .
+.br
+__TOC__
+.\" fix the defaults
+.ls 1
+.ad n
+.hy
+.tc

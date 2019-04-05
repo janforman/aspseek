@@ -1,0 +1,18 @@
+***************
+*** 231,236 ****
+  	void DecConnections();
+  	void AddSqlTimes(double sqlRead, double sqlWrite, double sqlUpdate);
+  	int FetchTree(const char* chref, CServer* srv, const char* server, char* tree);
+  };
+  
+  extern int term;
+--- 231,239 ----
+  	void DecConnections();
+  	void AddSqlTimes(double sqlRead, double sqlWrite, double sqlUpdate);
+  	int FetchTree(const char* chref, CServer* srv, const char* server, char* tree);
++ 	void IncrementIndexed(ULONG site_id, const char* url, int new_url);
++ 	int LimitReached(ULONG site_id, const char* url, int new_url);
++ 	void MarkDeleted(ULONG urlID, ULONG site_id, const char* url, int new_url, int val = 1);
+  };
+  
+  extern int term;

@@ -1,0 +1,643 @@
+# This is default config file for ASPseek 1.2 index.
+# See man pages aspseek.conf(5) and index(1) for details.
+# Please edit aspseek.conf only,
+# and keep aspseek.conf-dist for future reference.
+# Use '#' to comment out lines
+# All command names are case insensitive (Proxy=PROXY=proxy)
+# You may use '\' character to prolong current command to next line
+# when it is required.
+
+############################################################################
+# DBaddr is used to connect to database.
+# Format is:
+#    DBAddr <DBType>:[//[DBUser[:DBPass]@]DBHost[:DBPort]]/DBName/
+#
+DBAddr  mysql://foo:bar@localhost/aspseek/
+#DBAddr oracle8://foo:bar@localhost/aspseek/
+
+# Alternatively, you can put DBAddr in a separate file.
+#Include db.conf
+
+
+############################################################################
+# DataDir is the root directory delta files and for files with information
+# about words, subsets, spaces.
+# Defaults to var directory under ASPseek installation.
+#DataDir		@localstatedir@
+
+
+############################################################################
+# Byte ordering in words in field wordurl(1).word in unicode version.
+# The same value MUST be set in searchd.conf.
+# You MUST NOT change value of this parameter for not empty database.
+# Default value is low byte first (no).
+#HiByteFirst yes
+
+
+############################################################################
+# Build citation index, ranks of pages, last modified file incrementally
+# The same value MUST be set in searchd.conf.
+# You MUST NOT change value of this parameter for not empty database
+# If value of this parameter is "yes", then calculating of citations,
+# ranks of pages will require less memory and take less time on large
+# databases. So it is suitable if you want to index large number of URLs
+# and have relatively small about of RAM.
+# Default value is "yes". If you want 1.0.x compatibility, set this to "no".
+#
+#IncrementalCitations no
+
+
+############################################################################
+# Reverse index storage mode
+# In compact storage mode, file/BLOB is not created for each word.
+# Instead, information about all words is stored in 300 files
+# In this mode, updating of reverse index is generally much faster and
+# requires a bit less memory than old mode
+# You MUST NOT change value of this parameter for not empty database
+# The same value MUST be set in searchd.conf.
+# Defalut value is "yes". If you want 1.0.x compatibility, set this to "no".
+#
+#CompactStorage no
+
+
+############################################################################
+# UTF8 storage mode
+# This parameter has a sense only in unicode version and only for MySQL backend.
+# In UTF8 storage mode fields wordurl[1].word are stored in UTF8 encoding.
+# This mode can reduce sizes of data and index files for "wordurl" table.
+# To convert existing unicode database to this mode run "index -b".
+# The same value MUST be set in searchd.conf.
+# Default value is "no"
+#
+UtfStorage yes
+
+
+############################################################################
+# Debug level (none, error, warning, info, debug)
+# Default value is info
+#DebugLevel warning
+
+
+############################################################################
+# MaxDocSize bytes
+# Default value 1048576 (1 Mb)
+# Takes global effect for whole config file
+#MaxDocSize 1048576
+
+
+############################################################################
+# Include <filename>
+# Include another configuration file.
+# Absolute path if <filename> starts with "/":
+# Examples:
+#Include /usr/local/aspseek/etc/inc1.conf
+#Include inc1.conf
+
+# Charsets configuration
+Include charsets.conf
+
+# Unicode charsets configuration
+Include ucharset.conf
+
+# Stopwords configuration
+Include stopwords.conf
+
+
+############################################################################
+# HTTPHeader <header>
+# You may add your desired headers in index HTTP request
+# You should not use "If-Modified-Since","Accept-Charset" headers,
+# these headers are composed by index itself.
+# "User-Agent: ASPseek/version" is sent too, but you may override it.
+# Command has global effect for all configuration file.
+# Examples:
+#HTTPHeader User-Agent: My_Own_Agent
+#HTTPHeader Accept-Language: ru, en
+#HTTPHeader From: webmaster@mysite.com
+#HTTPHeader Pragma: no-cache
+
+
+############################################################################
+#Period <time>
+# Reindex period
+# Can be set many times before "Server" command and
+# takes effect till the end of config file or till next Period command.
+# <time> is in the form 'xxxA[yyyB[zzzC]]'
+# (Spaces are allowed between xxx and A and yyy and so on)
+#   there xxx, yyy, zzz are numbers (can be negative!)
+#         A, B, C can be one of the following:
+#		s - second
+#		M - minute
+#		h - hour
+#		d - day
+#		m - month
+#		y - year
+#      (these letters are the same as in strptime/strftime functions)
+#
+# Examples:
+# 15s - 15 seconds
+# 4h30M - 4 hours and 30 minutes
+# 1y6m-15d - 1 year and six month minus 15 days
+# 1h-10M+1s - 1 hour minus 10 minutes plus 1 second
+#
+# If you specify only number without any character, it is assumed
+# that time is given in seconds.
+#Period 7d
+
+
+############################################################################
+#Tag <number>
+# Use this field for your own purposes. For example for grouping
+# some servers into one group, etc...
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next Tag command.
+# NOTE: better way is to use so-called "webspaces" feature instead of Tag.
+#Tag 0
+
+
+############################################################################
+#MaxHops <number>
+# Maximum path in hops (or "mouse clicks") from start url.
+# Default value is 256.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next MaxHops command.
+#MaxHops 256
+
+
+############################################################################
+#MaxURLsPerServer <number>
+# Limits the number of documents retrieved from Server.
+# Default value is -1, that means no limits.
+# If set to positive value, no more than given number of pages will be
+# indexed from server.
+# Can be set multiple times before "Server" command and takes effect
+#till the end of config file or till next MaxURLsPerServer command.
+#MaxURLsPerServer 1000
+
+
+############################################################################
+#MaxURLsPerServerPerIndex <number>
+# Limits the number of documents retrieved from Server for this run of index.
+# Default value is -1, that means no limits.
+# If set to positive value, no more than given number of pages will be
+# indexed from server during this run of index.
+# Can be set multiple times before "Server" command and takes effect
+#till the end of config file or till next MaxURLsPerServerPerIndex command.
+#MaxURLsPerServerPerIndex 100
+
+
+#######################################################################
+#IncrementHopsOnRedirect yes/no
+# Allow/disallow index to increment hops value when redirects are
+# encountered.  Applies only to redirects generated by Location headers.
+#
+# WARNING: This option can be harmful as it negates the indexers built
+#  in ability to be self limiting in the case where a redirect loop is
+#  encountered. Please ensure that RedirectLoopLimit is set to a
+#  resonable value to enable recovery from entry into a redirect loop.
+#
+# This option does however allow a greater number of documents to be
+# indexed for sites that redirect frequently (e.g. for cookie testing,
+# typically on each page).
+# Default value is "yes".
+# Can be set multiple times before "Server" command and takes effect till
+# the end of config file or till next IncrementHopsOnRedirect command.
+#IncrementHopsOnRedirect yes
+
+
+#######################################################################
+#RedirectLoopLimit <number>
+# Maximum allowable contiguous redirects.
+# Default value is 8.
+# Can be set multiple times before "Server" command and takes effect till
+# the end of config file or till next RedirectLoopLimit command.
+#RedirectLoopLimit 8
+
+
+############################################################################
+#ReadTimeOut <time>
+# Maximum timeout while downloading document for each server.
+# Default value is 90 seconds.
+# Can be set any times before "Server" command and
+# takes effect till the end of config file or till next ReadTimeOut command.
+# For description of <time> format see Period command above.
+#ReadTimeOut 90s
+
+
+############################################################################
+#Robots yes/no
+# Allows/disallows using robots.txt and <META NAME="robots">
+# exclusions. Use "no", for example for link validation of your server(s).
+# Command may be used several times before "Server" command and
+# takes effect till the end of config file or till next Robots command.
+# Default value is "yes".
+#Robots yes
+
+
+############################################################################
+#Clones yes/no
+# Allow/disallow clone eliminating
+# Default value is "yes".
+#Clones yes
+
+
+############################################################################
+# Word lengths. You may change default length range of words
+# stored in database. By default, words with the length in the
+# range from 1 to 32 are stored. Note that setting MaxWordLength more
+# than 32 will not work as expected.
+#
+MinWordLength 3
+MaxWordLength 16
+
+############################################################################
+#DeleteBad yes/no
+# Use it to choose whether delete or not bad (not found, forbidden etc) URLs
+# from database.
+# May be used multiple times before "Server" command and
+# takes effect till the end of config file or till next DeleteBad command.
+# Default value is "no", that means do not delete bad URLs.
+#DeleteBad no
+
+
+############################################################################
+#DeleteNoServer yes/no
+# Use it to choose whether delete or not those URLs which have no
+# correspondent "Server" commands.
+# Default value is "yes".
+DeleteNoServer no
+
+
+############################################################################
+#Index yes/no
+# Prevent index from storing words into database.
+# Useful for example for link validation.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next Index command.
+# Default value is "yes".
+#Index yes
+
+
+############################################################################
+#Follow yes/no
+# Allow/disallow index to store <a href="..."> into database.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next Follow command.
+# Default value is "yes".
+#Follow no
+
+
+############################################################################
+#FollowOutside yes/no
+# Allow/disallow index to walk outside servers given in config file.
+# Should be used carefully (see MaxHops command)
+# Takes effect till the end of config file or till next FollowOutside command.
+# Default value "no"
+#FollowOutside no
+
+
+############################################################################
+#CharSet <charset>
+# Useful for 8 bit character sets.
+# WWW-servers send data in different charsets.
+# <Charset> is default character set of server in next "Server" command(s).
+# This is required only for "bad" servers that do not send information
+# about charset in header: "Content-type: text/html; charset=some_charset"
+# and have not <META NAME="Content" Content="text/html; charset=some_charset">
+# Can be set before every "Server" command and
+# takes effect till the end of config file or till next CharSet command.
+#CharSet windows-1251
+
+
+############################################################################
+#Replace <regexp> <replacement>
+#Replace <regexp>
+#Replace
+# Whenever outgoing link is encountered in URL content, if <regexp>
+# is found in its URL, it replaced by <replacment> string or by empty
+# string if <replacement> is not specified.
+# This is useful for sites with dynamic content, where the same information
+# can be obtained by many different URLs.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next Replace command.
+# Replace without parameters disables any replacements for subsequent
+# "Server" commands
+#
+# Example:
+#  Replace /pc,[^/]*
+#
+# Note that replacement can contain sequence \N (where N is a number
+# from 1 to 9), which gets replaced with the portion of regexp string
+# between Nth '\(' and \)'.
+# Example:
+#  Replace ^http://([^\.])\.mydomain.com http://\1.myotherdomain.com
+
+
+############################################################################
+#MinDelay <time>
+#MinDelay
+# Sets minimum time between finishing of access to server and beginning
+# of subsequent access to the server.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next MinDelay command.
+# Default value is 0 (that means no delay)
+# For description of <time> format see Period command above.
+# Example:
+#MinDelay 10s
+
+
+############################################################################
+#MaxDocsAtOnce <number>
+# Sets maximum number of pages to be downloaded from the same host before
+# switching to the next host.
+# Can be set multiple times before "Server" command and
+# takes effect till the end of config file or till next MaxDocsAtOnce command.
+# Default value is 1 (that means old behavior)
+# Large values are believed to increase indexing performance when number of
+# indexed sites is large.
+# Example:
+#MaxDocsAtOnce 50
+
+
+############################################################################
+#MaxBandwidth <number> <start> <end>
+# Sets maximum used bandwidth for incoming traffic in bytes/sec for the
+# specified period of time of day.
+# Parameters <start> and <end> are set in seconds from
+# midnight (GMT 0:00). If parameter <end> is omitted, then it is implied
+# to be end of day (86400). If both <start> and <end> are omitted, then
+# it sets value of bandwidth to whole day. Every MaxBandwidth command
+# override previous commands for specified period
+# Examples:
+#MaxBandwidth 62500
+#MaxBandwidth 125000 18000 46800
+
+
+############################################################################
+#AddressExpiry <time>
+# Sets expiration time for "DNS name -> IP" entry in address cache.
+# After entry is expired, resolver will make DNS lookup again.
+# Default is 1 hour.
+# For description of <time> format see Period command above.
+#AddressExpiry 2h
+
+#Proxy your.proxy.host[:port]
+# Use proxy rather then connect directly
+# You can index ftp servers when using proxy
+# Default port value if not specified is 3128 (Squid)
+# If proxy host is not specified direct connect will be used.
+# Can be set before every "Server" command and
+# takes effect till the end of config file or till next Proxy command.
+# If no one "Proxy" command specified index will use direct connect.
+#
+#           Examples:
+#           Proxy on atoll.anywhere.com, port 3128:
+#Proxy ultra.sw.com.sg:3128
+#
+#           Proxy on lota.anywhere.com, port 8090:
+#Proxy lota.anywhere.com:8090
+#
+#           Disable proxy (direct connect):
+#Proxy
+
+
+############################################################################
+#AuthBasic login:passwd
+# Use basic http authorization
+# Can be set before every "Server" command and
+# takes effect only for next one Server command!
+# Examples:
+#AuthBasic somebody:something
+
+# If you have password protected directory(ies), but whole server is open,use:
+#AuthBasic login1:passwd1
+#Server http://my.server.com/my/secure/directory1/
+#AuthBasic login2:passwd2
+#Server http://my.server.com/my/secure/directory2/
+#Server http://my.server.com/
+
+
+############################################################################
+#Server <URL>
+# It is the main command of aspseek.conf file
+# It's used to add start URL of server
+# You may use "Server" command as many times as number of different
+# servers required to be indexed.
+# You should specify FQDN in URL, so put http://myserver.mydomain.com/
+# instead of just http://myserver/
+# You can index ftp servers when using proxy:
+#Server ftp://localhost/
+Server	http://localhost/
+
+
+############################################################################
+#WordCacheSize <Number>
+# Maximum word count in the word cache.
+# Word cache is used to reduce database load for converting of word to word ID
+# Default value is 50000
+#WordCacheSize 90000
+
+
+############################################################################
+#HrefCacheSize <Number>
+# Maximum URL count in hrefs cache.
+# Hrefs cache is used to reduce database load for converting URL of outgoing
+# hyperlink to its URL ID.
+# Default value is 10000
+#HrefCacheSize 50000
+
+
+############################################################################
+#DeltaBufferSize <Number>
+# Size of buffer for each of 100 delta files in kilobytes.
+# Setting of low value for this parameter can result in big fragmentation
+# of delta files.
+# Value of this parameter can affect used memory. If default value is used,
+# then 50M of memory is used for buffers.
+# Default value is 512
+DeltaBufferSize 64
+
+############################################################################
+#UrlBufferSize <Number>
+# Size of read and write buffer allocated during inverted index merging for
+# "ind" files in kilobytes.
+# Value of this parameter can affect used memory during inverted index
+# merging.
+# Default value is DeltaBufferSize * 8
+#UrlBufferSize 1024
+
+
+############################################################################
+#NextDocLimit <Number>
+# Maximum count of URLs loaded from database at each request.
+# when "-o" switch is not used (ordered by next index time).
+# Default value is 1000
+#NextDocLimit 1000
+
+
+############################################################################
+#CheckOnly <regexp> [<regexp> ... ]
+#CheckOnlyNoMatch <regexp> [<regexp> ... ]
+# Index will use HEAD instead of GET HTTP method for URLs that
+# matche/do not match given regular expressions. It means that the file
+# will be checked only for being existing and will not be downloaded.
+# Useful for zip,exe,arj and other binary files.
+# Not that you can disallow those files with commands given below.
+# You may use several arguments for one 'CheckOnly' and 'CheckOnlyNoMatch'
+# commands.
+# Useful for example for searching through the URL names rather than
+# the contents (a la FTP-search).
+# Takes global effect for config file.
+# Check some known non-text extensions:
+#CheckOnly \.b$	\.sh$	\.md5$
+#CheckOnly \.arj$  \.tar$  \.zip$  \.tgz$  \.gz$
+#CheckOnly \.lha$ \.lzh$ \.tar\.Z$  \.rar$  \.zoo$
+#CheckOnly \.gif$  \.jpg$  \.jpeg$ \.bmp$  \.tiff$
+#CheckOnly \.vdo$  \.mpeg$ \.mpe$  \.mpg$  \.avi$  \.movie$
+#CheckOnly \.mid$  \.mp3$  \.rm$   \.ram$  \.wav$  \.aiff$
+#CheckOnly \.vrml$ \.wrl$ \.png$
+#CheckOnly \.exe$  \.cab$  \.dll$  \.bin$  \.class$
+#CheckOnly \.tex$  \.texi$ \.xls$  \.doc$  \.texinfo$
+#CheckOnly \.rtf$  \.pdf$  \.cdf$  \.ps$
+#CheckOnly \.ai$   \.eps$  \.ppt$  \.hqx$
+#CheckOnly \.cpt$  \.bms$  \.oda$  \.tcl$
+#CheckOnly \.rpm$
+#
+# or check ANY except known text extensions
+#CheckNoMatch \/$|\.html$|\.shtml$|\.phtml$|\.php$|\.txt$
+
+
+##########################################################################
+#Allow <regexp> [<regexp> ... ]
+# Use this to allow indexing of URLs that matches given regexp.
+# Use it in combination with Disallow, AllowNoMatch, DisallowNoMatch
+# commands (see below).
+# You may use several arguments for one 'Allow' command.
+# You may use this command many times.
+# Takes global effect for config file.
+# Note that ASPseek automatically adds one "Allow .*"
+# command after reading config file. It means to allow everything
+# that is not disallowed.
+#Allow .*
+
+
+############################################################################
+#AllowNoMatch <regexp> [<regexp> ... ]
+# Use this to allow URLs that do not match given regular expression(s).
+# One can use several arguments for one 'AllowNoMatch' command.
+# One can use this command many times.
+# Takes global effect for config file.
+# Example: Allow URLs not from .com domain
+#AllowNoMatch ://[^/]*\.com/
+
+
+############################################################################
+#DisallowNoMatch <regexp> [<regexp> ... ]
+# Use this to disallow URLs that do not match given regexps.
+# Takes global effect for config file.
+# Examples:
+# Disalow URLs that are not in some.net domains:
+#DisallowNoMatch  ://[^/]*\.some\.net\/
+#
+# Disallow any except known extensions and directory index:
+#DisallowNoMatch \/$|\.htm$|\.html$|\.shtml$|\.phtml$|\.php$|\.txt$
+#
+# Disallow everything but .sg domain
+#DisallowNoMatch ://[^/]*\.sg/
+# Strictly check http://xxx.xxx.xx/xx URL format
+DisallowNoMatch ^(http://)([a-zA-Z0-9_\-]+)([\.][a-zA-Z0-9_\-]+)+([/][a-zA-Z0-9\~\(\)_\-]*)+([\.][a-zA-Z0-9\(\)_\-]+)*$
+
+############################################################################
+#Disallow <regexp> [<regexp> ... ]
+# Use this to disallow url that matches given regexp.
+# One can use several arguments for one 'Disallow' command.
+# Takes global effect for config file.
+
+# Exclude some TLD (for example)
+#Disallow ://[^/]*\.jp/
+#Disallow ://[^/]*\.cn/
+#Disallow ://[^/]*\.in/
+#Disallow ://[^/]*\.ua/
+#Disallow ://[^/]*\.ru/
+#Disallow ://[^/]*\.kr/
+#Disallow ://[^/]*\.by/
+
+Disallow \?q= \?Q= /q/ /r/
+
+# Exclude cgi-bin and non-parsed-headers
+Disallow /cgi-bin/ \.cgi /nph
+#Disallow \?
+
+# Exclude some known extensions
+Disallow \.tif$  \.au$   \.mov$  \.jpe$  \.cur$  \.qt$ \.flv$
+Disallow \.b$	 \.sh$	 \.md5$   \.rpm$
+Disallow \.arj$  \.tar$  \.zip$  \.tgz$  \.gz$
+Disallow \.lha$  \.lzh$  \.tar\.Z$  \.rar$  \.zoo$
+Disallow \.gif$  \.jpg$  \.jpeg$ \.bmp$  \.tiff$ \.xpm$ \.xbm$
+Disallow \.vdo$  \.mpeg$ \.mpe$  \.mpg$  \.avi$  \.movie$
+Disallow \.mid$  \.mp3$  \.rm$   \.ram$  \.wav$  \.aiff$ \.ra$
+Disallow \.vrml$ \.wrl$  \.png$
+Disallow \.exe$  \.cab$  \.dll$  \.bin$  \.class$
+Disallow \.tex$  \.texi$ \.xls$  \.doc$  \.texinfo$
+Disallow \.rtf$  \.pdf$  \.cdf$  \.ps$
+Disallow \.ai$   \.eps$  \.ppt$  \.hqx$
+Disallow \.cpt$  \.bms$  \.oda$  \.tcl$
+Disallow \.o$ \.a$ \.la$ \.so$ \.so\.[0-9]$
+Disallow \.pat$ \.pm$ \.m4$ \.am$
+Disallow \.css$ \.js$ \.wmv$
+
+# Exclude Apache directory list in different sort order
+Disallow \?D=A$ \?D=A$ \?D=D$ \?M=A$ \?M=D$ \?N=A$ \?N=D$ \?S=A$ \?S=D$
+# Exclude ./. and ./.. from Apache and Squid directory list
+#Disallow /[.]{1,2} /\%2e /\%2f
+# Exclude double slashes path_part1//path_part2
+Disallow [^:]//
+Disallow PHPSESSID
+
+# Exclude porn and spam domains
+#Disallow porn sex teen pussy free zadarmo adult xxx sperm penis fuck viagra cialis nude slut parfemy 100plus upskirt voyeur perverse download crack hardcore  amateur anal eroti naked virgin lingerie tgp shemale butts boobs pervert trann horny dirty fetish lesbian bizarre blowjob gay nasty drunk cash looble bloggingstocks celebclk
+#Disallow bazar shop trade elektro obchod nakup prodej zbozi doporucujeme potrebuji koupelny nabytek parfemy parfums list chat sport xmlrpc
+
+############################################################################
+# How to combine Allow,AllowNoMatch,Disallow,DisallowNoMatch,
+# CheckOnly, CheckOnlyNoMatch commands.
+#
+# index will compare URL against all CheckOnly, Allow, Disallow, ..NoMatch
+# command arguments in the same order given in aspseek.conf file.
+# If index find that URL matches some rule it will make decision of what
+# to do with this URL, allow it, disallow it or use HEAD instead
+# of the GET method. So, you may use different CheckOnly, Allow, Disallow,
+# or ..NoMatch commands order.
+# If no one CheckOnly, Allow, Disallow, ..NoMatch commands are given,
+# ASPseek will allow everything by default.
+#
+#There are many possible combinations. The samples of two of them are here:
+#
+# Sample of first useful combination.
+# Disallow first known non-text extensions (zip,wav etc),
+# then allow everything else. This sample is uncommented above
+#
+# Sample of second combination.
+# Allow first some known text extensions (html, txt) and directory index (/),
+# then disallow everything else:
+#
+#Allow \.html$ \.txt$ \/$
+#Disallow .*
+#
+
+############################################################################
+# Countries <filename>
+# Loads information from file about countries, to which ranges of IP addresses
+# are assigned. File must countain rows with following format:
+# S.S.S.S-E.E.E.E <Country>
+# where S.S.S.S is starting IP address, E.E.E.E is ending IP address and
+# <Country> is the country code
+# Example:
+# Countries a203
+
+############################################################################
+# AllowCountries <CountryList>
+# Use this to allow sites, which located in one of specified countries
+# Country of site is determined by its IP address and <Countries> directive
+# Example:
+# AllowCountries SG HK

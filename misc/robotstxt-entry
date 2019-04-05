@@ -1,0 +1,24 @@
+robot-id: aspseek
+robot-name: ASPseek
+robot-cover-url: http://www.aspseek.org/
+robot-details-url: http://www.aspseek.org/man/index.1.html
+robot-owner-name: ASPseek Developers Team
+robot-owner-url: http://www.aspseek.org/
+robot-owner-email: aseek@sw.com.sg
+robot-status: active
+robot-purpose: indexing
+robot-type: standalone
+robot-platform: unix
+robot-availability: source, binary
+robot-exclusion: yes
+robot-exclusion-useragent: ASPseek
+robot-noindex: yes
+robot-host: *
+robot-from: no
+robot-useragent: ASPseek/1.2.13
+robot-language: c++
+robot-description: Indexing robot from ASPseek search engine
+robot-history: In development since 1999, uses some code from UdmSearch project
+robot-environment: service, research, hobby
+modified-date: Fri, 02 Jan 2006 00:00:00 GMT
+modified-by: forman@earthcom.info

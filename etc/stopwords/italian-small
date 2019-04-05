@@ -1,0 +1,76 @@
+# This is another set of Italian stopwords contributed by Massimo Miccoli
+#
+
+# Date:  Wed, 28 Nov 2001 15:00:40 +0100
+# From:  Massimo Miccoli <mmiccoli@iltrovatore.it>
+#
+# Hi Kir,
+#
+# In attach you can find a correct version of italian stopwords. Can you
+# include it in the 1.2.7 release of Aspseek?
+
+
+# Native italian words
+per
+gli
+degli
+no
+i
+a
+o
+ho
+chi
+che
+ma
+di
+da
+con
+su
+giu
+tra
+fra
+te
+un
+con
+uno
+una
+loro
+voi
+noi
+in
+vai
+qui
+lui
+io
+qua
+lei
+solo
+me
+piu
+no
+ora
+alla
+allo
+allora
+le
+il
+sul
+sulla
+va
+ai
+al
+e
+lo
+la
+hai
+ha
+nella
+del
+della
+dello
+ben
+nei
+cui
+sia
+www
+dell

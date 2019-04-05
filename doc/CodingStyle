@@ -1,0 +1,54 @@
+If you want to contribute to the package, please follow these guidelines
+while writing code:
+
+0. Use comments (see details below).
+1. Use "new" and "delete" operators instead of "free" and "malloc" functions.
+2. Put open bracket "{" to the next line after "if", "do", "while"....
+3. Member variables should start with "m_".
+4. Class names should start with uppercased C; every word in class and member
+   function names should be uppercased (ex.: CAwaySender::GetLostBuddy())
+5. Put one space after keywords and commas. Put spaces around operators.
+6. Each line of function body, including variables declarations, should 
+   be indented by tabulation (and should NOT be started at the same position
+   as body opening bracket)
+
+If you like to send a patch, please generate a unified diff (diff -u) file
+and clearly state against which version your patch is.
+
+While writing your comments, please honor doxygen style (see
+http://www.stack.nl/~dimitri/doxygen/docblocks.html). That specifically
+means, that if you want to document class or member, put the comment just
+before it's definition, and add one extra slash or asterisk. If you want to
+put comment at the same line as definition, additionally put "less then" sign.
+
+Comments in code should be done as usual, they do not needed for docs, just
+for code readers.
+
+Here's an example:
+
+/** Here goes brief one-line class description.
+    And this is longer class description, with
+    all the gory details included.
+*/
+class CAwaySender
+{
+private:
+	int m_known;	///< Counts known visitors
+	/// Counts unknown visitors
+	int m_unknown;
+public:
+	/// Default constructor
+	void CAwaySender(void): m_known(0), m_unknown(0) {}
+	/// Say goodbye to one that we don't like. v is reference to visitor
+	void SayGoodBye(CVisitor& v);
+	/** This is more rude way to do the same as SayGoodBye does */
+	void GetLostBuddy(CVisitor& v);
+	void CheckVisitor(CVisitor& v) ///< Checks visitor and kicks him off
+	{
+		// in this version we assume that all visitors are unknown
+		m_unknown++; // count it
+		/* yes, we ARE rude */
+		GetLostBuddy(v);
+	}
+};
+

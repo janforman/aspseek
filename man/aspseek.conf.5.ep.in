@@ -1,0 +1,440 @@
+.\" $Id: aspseek.conf.5.ep.in,v 1.25 2002/12/23 10:49:56 kir Exp $
+.\" @configure_input@
+.TH aspseek.conf 5 "$Date: 2002/12/23 10:49:56 $" "ASPseek v.@VERSION@" "ASPseek user's guide"
+.SH NAME
+aspseek.conf \- index configuration file
+.SH SYNOPSIS
+\fB@sysconfdir@/aspseek.conf\fR
+.SH DESCRIPTION
+\fBaspseek.conf\fR is a configuration file for \fBindex\fR(1). It completely
+defines all the aspects of ASPseek indexing process - what to index and how
+to do it.
+.P
+The following can be defined:
+.SS General
+.TP
+\fBDBAddr\fR \fBDBType\fR:[//[\fBUser\fR[:\fBPass\fR]@]\fBHost\fR[:\fBPort\fR]]/\fBDBName\fR/
+Defines SQL server connection parameters.
+.br
+\fBDBType\fR is SQL server type, it can be \fImysql\fR or \fIoracle8\fR
+for now.
+.br
+\fBUser\fR is a SQL server's user to connect as.
+.br
+\fBPass\fR is a \fBUser\fR's password. If this field is omitted,
+no password is used.
+.br
+\fBHost\fR is a host name or IP address of host to connect to. If you
+are running SQL server on the same machine, use \fIlocalhost\fR.
+.br
+\fBPort\fR is a port number on which SQL server is listening at.
+Default is the same as default port of used SQL server.
+.br
+\fBDBName\fR is a name of the database used.
+.TP
+\fBDBLibDir\fR \fI/some/dir\fR
+Adds \fI/some/dir\fR to list of directories to search for database
+backend library (lib\fIdbname\fR-\fIversion\fR.so).
+Default library search path is
+\fB\f(CW@libdir@\fR. Several such options can be used, each adding
+one more directory to the list. Last added directory is used first;
+compiled in path is last.
+.TP
+\fBDataDir\fR \fI /some/dir
+Sets directory in which delta files and files with information
+about words, subsets, spaces will be stored. Default is
+\fB\f(CW@localstatedir@\fR.
+.TP
+\fBDebugLevel\fR \fInone\fR | \fIerror\fR | \fIwarning\fR | \fIinfo\fR | \fIdebug\fR
+Sets the level of debugging. If set to \fInone\fR, nothing will be logged. If
+set to \fIdebug\fR, you will get a bunch of messages. Default value is
+\fIinfo\fR.
+.TP
+\fBInclude\fR \fIfile\fR
+Includes the contents of \fIfile\fR at this point, so you can specify some
+parameters in that included \fIfile\fR. File name is relative
+to ASPseek etc directory (\fB\f(CW@sysconfdir@\fR).
+.SS Parameters that affects memory usage vs. performance
+These parameters can be tuned to achieve the better performance on boxes
+with enough memory. They can also be used to reduce the amount of memory
+used by \fBindex\fR(1).
+.TP
+\fBDeltaBufferSize\fR \fIkilobytes\fR
+Size of buffer for each of 100 delta files, in kilobytes. Setting of low value
+for this parameter can result in big fragmentation of delta files.
+Value of this parameter affects used memory. If default value is used,
+then 50 Mb of memory is used for buffers. Default value is \fI512\fR.
+.TP
+\fBUrlBufferSize\fR \fIkilobytes\fR
+Size of read and write buffer allocated during inverted index merging for
+\fBind\fR files, in kilobytes. Value of this parameter affects used memory
+during inverted index merging. Default value is \fBDeltaBufferSize\fR * 8.
+.TP
+\fBWordCacheSize\fR \fInumber\fR
+Maximum word count in the word cache. Word cache is used to reduce database
+load for converting word to its word ID. Default value is \fI50000\fR.
+.TP
+\fBHrefCacheSize\fR \fInumber\fR
+Maximum URL count in the href cache. Href cache is used to reduce database
+load for converting URL of outgoing hyperlink to its URL ID.
+Default value is \fI10000\fR.
+.TP
+\fBNextDocLimit\fR \fInumber\fR
+Maximum number of URLs loaded from database at each request.
+Default value is \fI1000\fR.
+
+This option is used only if URLs to be indexed are ordered by next index time;
+otherwise, if \fB-o\fR option to \fBindex\fR(1) is used, all URLs for current
+hop is taken at once.
+.SS Database format parameters
+These parameters set different modes of storing indexed information.
+Note that database format is different if you change these options,
+so the same value \fBmust\fR be set in \fBsearchd.conf\fR(5) file, and you
+\fBmust not\fR change the values on a non-empty database.
+.TP
+\fBHiByteFirst\fR \fIyes\fR | \fIno\fR
+Sets the byte ordering used in field \fBwordurl[1].word\fR
+(only in Unicode version). Default is \fIno\fR.
+.TP
+\fBIncrementalCitations\fR \fIyes\fR | \fIno\fR
+Sets whether to build citation index, ranks of pages and lastmod
+incrementally. If value of this parameter is set to \fIyes\fR, then
+calculating of citations, ranks of pages and lastmod file will require
+less memory and take less time on large databases. So it is very handy
+if you want to index large number of URLs and have relatively small amount
+of memory. Default is \fIyes\fR.
+.TP
+\fBCompactStorage\fR \fIyes\fR | \fIno\fR
+Sets the storage mode of reverse index. In compact storage mode, file/BLOB
+is not created for each word. Instead, information about all words is stored
+in 300 files. In this mode, updating of reverse index is generally much
+faster and requires a bit less memory than in the old mode.
+Default is \fIyes\fR.
+.TP
+\fBUtfStorage\fR \fIyes\fR | \fIno\fR
+This parameter has sense only in Unicode version and only for MySQL back-end.
+In UTF8 storage mode fields \fBwordurl[1].word\fR are stored in UTF8 encoding.
+This mode can reduce sizes of data and index files for \fBwordurl\fR table.
+To convert existing Unicode database to this mode, run \fBindex -b\fR.
+Default value is \fIno\fR.
+.SS Bandwidth control
+.TP
+\fBMaxBandwidth\fR \fIbytes\fR [\fIstarttime\fR [\fIendtime\fR]]
+Sets maximum used bandwidth for incoming traffic to \fIbytes\fR per second
+for the specified period of time of day. Arguments \fIstarttime\fR and
+\fIendtime\fR are in seconds from midnight (0:00). If \fIendtime\fR is
+omitted, then it is implied to be the end of the day (86400). If both
+\fIstarttime\fR and \fIendtime\fR are omitted, then the limit is for
+the whole day. You can use several \fBMaxBandwidth\fR commands.
+Note that if \fIendtime\fR is less than \fIstarttime\fR, \fBindex\fR(1)
+will handle it correctly, setting two intervals from \fIstarttime\fR to
+midnight and from midnight to \fIendtime\fR. By default bandwidth is not
+limited.
+.SS Indexing
+.TP
+\fBServer\fR \fIURL\fR
+Add \fIURL\fR as an URL to start indexing from. You can specify many
+\fBServer\fR commands, and set the different options for different sites -
+see below. Note that if \fIURL\fR contains path, the whole site will be
+indexed nevertheless, so to limit indexing to some subdirectory of site
+use \fBDisallow\fR parameter described below.
+.SS Global indexing parameters
+Each of the below parameters can be specified only once in configuration file
+and takes the global effect for the whole \fBindex\fR(1) session.
+.TP
+\fBMaxDocSize\fR \fIbytes\fR
+Sets the maximum document size in bytes, so if document size is bigger than
+\fIbytes\fR, only the first \fIbytes\fR of the document will be processed.
+Default value is \fI1048576\fR bytes (1Mb).
+.TP
+\fBHTTPHeader\fR \fIheader\fR
+Add \fIheader\fR to headers that \fBindex\fR(1) sends in HTTP request. You
+should not use \fIIf-Modified-Since\fR or \fIAccept-Charset\fR headers here,
+as \fBindex\fR(1) sends it anyway. Header \fIUser-Agent: aspseek/@VERSION@\fR
+is sent too, but you may override it.
+.TP
+\fBClones\fR \fIyes\fR | \fIno\fR
+Sets whether to enable clones eliminating. Clone is a document which is
+absolutely the same as another document. If this set to \fIyes\fR, clone
+is not parsed/stored in the database, instead word information for original
+document is used. Default value is \fIyes\fR.
+.TP
+\fBMinWordLength\fR \fInumber\fR
+Sets the minimum length of word to be stored in the database, so words
+shorter than \fInumber\fR is not stored. Default value is \fI1\fR.
+.TP
+\fBMaxWordLength\fR \fInumber\fR
+Sets the maximum length of word to be stored in the database, so words
+longer than \fInumber\fR is not stored. Default value is \fI32\fR. Note
+that you can't set the value higher than 32.
+.TP
+\fBDeleteNoServer\fR \fIyes\fR | \fIno\fR
+Sets whether to delete URLs which have no correspondent "Server" commands.
+Default value is \fIyes\fR.
+.TP
+\fBAddressExpiry\fR \fItime\fR
+Sets expiration time for "DNS name -> IP" entry in address cache.
+After entry is expired, resolver will make DNS lookup again.
+Argument \fItime\fR can be set in seconds, or the same way as in
+\fBPeriod\fR command below. Default value is 1 hour.
+.SS Indexing scope
+These parameters can is used to limit the scope of indexing.
+\fBindex\fR(1) will compare all URLs against all \fBCheckOnly\fR,
+\fBCheckOnlyNoMatch\fR, \fBAllow\fR, \fBAllowNoMatch\fR, \fBDisallow\fR
+and \fBDisallowNoMatch\fR directives in the order specified in configuration
+file, so order is important. Note that by default everything is allowed.
+.PP
+Some directives below use POSIX regular expressions (regexp) for flexibility.
+For description of what regexp is, see \fBregex\fR(7), \fBgrep\fR(1),
+\fBawk\fR(1).
+.TP
+\fBFollowOutside\fR \fIyes\fR | \fIno\fR
+Sets whether \fBindex\fR(1) should index outside sites defined in \fBServer\fR
+directives. Default is \fIno\fR. If you set it to \fIyes\fR, be sure to limit
+the scope of indexing in some other way (for example, with \fBMaxHops\fR).
+.TP
+\fBCheckOnly\fR \fIregexp\fR [\fIregexp\fR...]
+Use \fBHEAD\fR request instead of \fBGET\fR for URLs matching \fIregexp\fR.
+So, such URLs will not be downloaded, just information
+about them will be stored in \fBurlword\fR table.
+.TP
+\fBCheckOnlyNoMatch\fR \fIregexp\fR [\fIregexp\fR...]
+Use \fBHEAD\fR request instead of \fBGET\fR for URLs \fBnot\fR matching
+\fIregexp\fR. So, such URLs will not be downloaded, just information
+about them will be stored in \fBurlword\fR table.
+.TP
+\fBAllow\fR \fIregexp\fR [\fIregexp\fR...]
+Allows to index URLs matching \fIregexp\fR.
+.TP
+\fBAllowNoMatch\fR \fIregexp\fR [\fIregexp\fR...]
+Allows to index URLs \fBnot\fR matching \fIregexp\fR.
+.TP
+\fBDisallow\fR \fIregexp\fR [\fIregexp\fR...]
+.TP
+\fBDisallowNoMatch\fR \fIregexp\fR [\fIregexp\fR...]
+Disallows to index URLs \fBnot\fR matching \fIregexp\fR.
+.TP
+\fBCountries\fR \fIfile\fR
+Loads countries IP information from \fIfile\fR. File consists of lines in the
+form "sss.sss.sss.sss - eee.eee.eee.eee cc", where \fIsss.sss.sss.sss\fR
+is starting IP address, \fIeee.eee.eee.eee\fR is ending IP address,
+and \fIcc\fR is a country code (like \fIru\fR, \fIde\fR, etc.).
+Note that value of ending address should be more than starting
+address.
+.TP
+\fBAllowCountries\fR \fIcc1\fR [\fIcc2\fR...]
+Specifies to index only sites from countries specified by \fIcc1\fR,
+\fIcc2\fR, etc. Should be used together with the \fBCountries\fR.
+.SS Indexing parameters - local
+Each of the below parameters can be specified many times in configuration
+file, applies to all \fBServer\fR parameters below it, and valid till next
+parameter with the same name, or till the end of configuration file.
+.TP
+\fBPeriod\fR \fItime\fR
+Sets the re-index period to \fItime\fR. Value can be set just in seconds, or
+using a special characters right after the number (no spaces allowed):
+\fBs\fR for seconds, \fBM\fR for minutes, \fBh\fR for hours, \fBd\fR for days,
+\fRm\fR for months and \fBy\fR for years. You can combine several values
+together, for example string \fI1m12d\fR means "one month and twelve days".
+You can also specify negative numbers, say \fI1m-10d\fR stands for "one month
+minus ten days". Default value is \fI7d\fR.
+.TP
+\fBTag\fR \fInumber\fR
+Use this field to "tag" several \fBServer\fRs with value \fInumber\fR,
+which can later be used with option \fB-t\fR \fInumber\fR of \fBindex\fR(1)
+command. Note that if you want to group several sites together for searching
+purposes, you should use "spaces" or "subsets" features of ASPseek, not tag.
+.TP
+\fBMaxHops\fR \fBnumber\fR
+Sets the maximum hops ("mouse clicks") from URL specified by \fBServer\fR
+command, so documents that are "deeper" will not be indexed.
+Default value is \fI256\fR.
+.TP
+\fBIncrementHopsOnRedirect\fR \fIyes\fR | \fIno\fR
+Sets whether \fBindex\fR(1) should increment hops value when HTTP redirect
+is encountered. Applies only to redirects generated by "\fBLocation:\fR" HTTP
+headers. Setting this option to \fIno\fR allows a greater number of documents
+to be indexed for sites that redirect frequently (e.g. for cookie testing,
+typically on each page). Default value is \fIyes\fR.
+.TP
+\fBRedirectLoopLimit\fR \fInumber\fR
+Allow no more than \fInumber\fR of contiguous redirects. This option is
+especially useful if you set \fBIncrementHopsOnRedirect\fR to \fIno\fR,
+because \fBindex\fR(1) can fall in an endless redirect loop. Limiting the
+number of redirects prevents \fBindex\fR from such redirect loops.
+Default value is \fI8\fR.
+.TP
+\fBMaxDocsPerServer\fR \fInumber\fR
+Sets that no more than \fInumber\fR of documents will be indexed from one
+site during one run of \fBindex\fR(1). Default value is \fI-1\fR, which
+means no limits.
+.TP
+\fBMaxDocsAtOnce\fR \fInumber\fR
+Sets the maximum number of pages to be downloaded from the same host before
+switching to the next host. Large values are believed to increase indexing
+performance when number of indexed sites is large. Default value is \fI1\fR.
+.TP
+\fBReadTimeOut\fR \fItime\fR
+Sets the maximum timeout to \fItime\fR for downloading a document from site.
+Argument can be expressed in seconds, or in the same form as in \fBPeriod\fR
+command above. Default value is 90 seconds.
+.TP
+\fBRobots\fR \fIyes\fR | \fIno\fR
+Sets whether the robot exclusion standard (\fB\f(CWrobots.txt\fR file and
+META NAME="robots") will be honored. Default is \fIyes\fR.
+.TP
+\fBDeleteBad\fR \fIyes\fR | \fIno\fR
+Sets whether to delete bad (not found, forbidden etc.) URLs from the database.
+Default value is \fIno\fR.
+.TP
+\fBIndex\fR \fIyes\fR | \fIno\fR
+Sets whether to store words into database. Default value is \fIyes\fR.
+.TP
+\fBFollow\fR \fIyes\fR | \fIno\fR
+Sets whether to store links found into database. Default value is \fIyes\fR.
+.TP
+\fBCharset\fR \fIcharset\fR
+Usable to set charset for the servers that do not return it. Argument should
+be known charset name (see below for charset configuration). Alternatively,
+you can use charset guesser feature of \fBindex\fR(1).
+.TP
+\fBReplace\fR [\fIregexp\fR [\fIreplacement\fR]]
+This parameter allows to replace URL matching \fIregexp\fR by
+\fIreplacement\fR, or by empty string if \fIreplacement\fR is
+not specified. This is useful for sites with dynamic contents
+where the same information can be obtained by many different
+URLs. \fBReplace\fR without arguments disables any
+replacements for subsequent \fBServer\fR commands.
+
+As in \fBsed\fR(1) command \fBs\fR, the \fIreplacement\fR can contain
+\fI\\N\fR (\fIN\fR being a number from 1 to 9, inclusive) references,
+which refer to the portion of the match which is contained between
+\fIN\fRth '\\(' and its matching '\\)'.
+To include a literal '\\', precede it with another '\\'.
+.TP
+\fBMinDelay\fR \fItime\fR
+Sets minimum time between finishing of access to server and beginning
+of next access to the server. This is useful if site owner blames you
+for "bombing" his site with your \fBindex\fR(1) queries.
+Argument \fItime\fR can be set in seconds, or in the same way as
+described in \fBPeriod\fR command above. Default value is \fI0\fR.
+.TP
+\fBProxy\fR [\fIhost.com\fR[:\fIport\fR]]
+Use proxy rather than direct connection. You can also index FTP sites
+via proxy. If \fIport\fR is not specified, default is \fI3128\fR
+(sqiud). \fBProxy\fR without arguments disables proxy.
+.SS External converters
+\fBindex\fR(1) has an ability to deal with document types other than
+\fBtext/plain\fR and \fBtext/html\fR. It does so with the help of an external
+programs or scripts, which can convert from some format to \fBtext/plain\fR
+(or \fBtext/html\fR), so you are able to index \fB\f(CW.ps\fR, \fB\f(CW.pdf\fR
+etc.
+.TP
+\fBConverter\fR \fIfrom/type\fR \fIto/type\fR[; \fBcharset\fR=\fIcset\fR] \fIcommand line\fR
+Specifies that for converting documents with MIME-type \fIfrom/type\fR to
+MIME-type \fIto/type\fR the command specified by \fIcommand line\fR will
+be used. Argument \fIfrom/type\fR can be any type returned by Web server.
+Argument \fIto/type\fR can be either \fItext/plain\fR or \fItext/html\fR.
+If you add \fB;charset\fR=\fIcset\fR string after \fIto/type\fR, \fBindex\fR
+will know that resulting document has a charset \fIcset\fR, otherwise it
+is assumed to be \fBus-ascii\fR.
+
+
+In the \fIcommand line\fR you usually specify program or script to run,
+together with its options. Program is expected to to read from stdin and
+write the converted document to stdout.
+
+If your program can't deal with stdin/stdout streams, you should use
+\fB$in\fR and \fB$out\fR strings in \fBcommand line\fR, and they will be
+substituted with two file names in \f(CW/tmp\fR directory. \fBindex\fR(1)
+will create files with unique names, write the document downloaded to the
+first file (referenced as \fB$in\fR), run the \fI/bin/prog\fR, read the second
+file (referenced as \fB$out\fR) into memory, and then delete both files.
+
+You can also use \fB$url\fR in \fIcommand line\fR, it will be substituted with
+the actual URL of downloaded document. You can use it in your own scripts to
+distinguish between a different document variations, or to be able to write
+one script for many different MIME-types.
+
+Please note that \fBindex\fR(1) relies on a \fBContent-Type\fR header
+returned by a Web server. Some Web-servers are misconfigured and give wrong
+info (for example, return header
+\fBContent-Type: audio/x-pn-realaudio-plugin\fR for \fB\f(CW.rpm\fR
+files).
+
+Examples:
+
+.nf
+\f(CWConverter app/ps text/plain; charset=iso8859-1 ps2ascii
+# ps2ascii can't deal with PDF files from stdin
+Converter application/pdf text/plain ps2ascii $in $out
+.fi
+\fR
+.SS Charset configuration for non-Unicode version
+Charset configuration for non-Unicode version is usually stored in
+file \fB\f(CW@sysconfdir@/charsets.conf\fR.
+Charset files for non-Unicode version can be found in
+\fB\f(CW@sysconfdir@/charsets\fR directory. Langmap files can be
+found in \fB\f(CW@sysconfdir@/langmap\fR directory.
+.TP
+\fBCharsetTable\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the table for \fIcharset\fR of language \fIlang\fR from \fIfile\fR.
+Optionally load langmap file \fIlmfile\fR, which is used for charset guesser.
+.TP
+\fBCharsetAlias\fR \fIcharset\fR \fIalias1\fR [\fIalias2\fR...]
+Defines \fIalias1\fR, \fIalias2\fR, ... as aliases (alternative names)
+for \fIcharset\fR. This is needed because in many cases there is no
+"one true name" for the charset - different web servers and page
+authors use different names.
+.TP
+\fBLocalCharset\fR \fIcharset\fR
+Sets the local charset for ASPseek, so all data in the database is assumed
+to be in that charset.
+.SS Charset configuration for Unicode version
+Charset configuration for Unicode version is usually stored in
+file \fB\f(CW@sysconfdir@/ucharset.conf\fR. Charset files for Unicode version
+can be found in \fB\f(CW@sysconfdir@/tables\fR directory.
+.TP
+\fBCharsetTableU1\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the Unicode mapping for \fIcharset\fR of language \fIlang\fR from
+\fIfile\fR. Optionally load langmap file \fIlmfile\fR, which is used for
+charset guesser.
+.TP
+\fBCharsetTableU2\fR \fIcharset\fR \fIlang\fR \fIfile\fR [\fIlmfile\fR]
+Loads the Unicode mapping for multibyte \fIcharset\fR of language
+\fIlang\fR from \fIfile\fR. Optionally load langmap file \fIlmfile\fR,
+which is used for charset guesser.
+.TP
+\fBDictionary2\fR \fIlang\fR \fIfile\fR [\fIcharset\fR]
+Loads dictionary for \fIlang\fR from \fIfile\fR. If \fIcharset\fR is not
+specified, it is assumed that the file is in Unicode. Dictionary is used
+for tokenizing of text in Chinese, Japanese and Korean languages.
+.SS Stopwords
+Stopwords configuration is usually stored in the file
+\fB\f(CW@sysconfdir@/stopwords.conf\fR. Stopword files for different languages
+can be found in \fB\f(CW@sysconfdir@/stopwords\fR directory.
+.TP
+\fBStopwordFile \fIlang\fR \fIfile\fR [\fIcharset\fR]
+Loads stopwords for language \fIlang\fR from \fIfile\fR. If \fIcharset\fR
+is not specified, file contents is assumed to be in \fBLocalCharset\fR,
+otherwize it is in \fIcharset\fR.
+.SH FILES
+\fB\f(CW@sysconfdir@/aspseek.conf\fR
+.br
+\fB\f(CW@sysconfdir@/charsets.conf\fR
+.br
+\fB\f(CW@sysconfdir@/ucharset.conf\fR
+.br
+\fB\f(CW@sysconfdir@/stopwords.conf\fR
+.SH BUGS
+Many parameters are the same in \fBsearchd.conf\fR and in
+\fBaspseek.conf\fR(5).
+.SH SEE ALSO
+.BR index (1),
+.BR aspseek.conf (5),
+.BR regex (7),
+.BR http://www.robotstxt.org/wc/robots.html .
+.SH AUTHORS
+Copyright (C) 2000, 2001, 2002 by SWsoft.
+.br
+Man page by Kir Kolyshkin <kir@asplinux.ru>

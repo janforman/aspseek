@@ -1,0 +1,84 @@
+	ASPseek v.1.2    http://www.aspseek.org/
+	    Advanced Internet search engine
+	Copyright (C) 2000, 2001, 2002 by SWsoft
+
+
+
+ASPseek is a full-featured medium-to-large scale Internet search engine.
+It consists of an indexing robot, a search daemon and a search front-ends
+(CGI or Apache module). These programs are written in C++ using STL library.
+ASPseek uses mix of SQL database and binary files for data storage.
+
+
+	ASPseek features
+	----------------
+
+To learn about ASPseek features, please read aspseek(7) man page.
+Here is just a brief list:
+
+* Ability to index and search through several millions of documents
+* HTTP, HTTP proxy, FTP (via proxy) protocols
+* HTTP basic authorization
+* HTTPS protocol
+* text/html and text/plain documents
+* Other document types support via external converters
+* Architecture optimized for multiple sites
+* Multithreaded
+* Async DNS resolver
+* Stopwords
+* Unicode support to deal with many character sets (including CJK) at once
+* Charset guesser (optional)
+* Language guesser
+* Robot exclusion standard (robots.txt) support
+* Settings to control network bandwidth usage and Web servers load
+* Real-time asynchronous indexing
+* Very good relevancy of results
+* Sorting results by relevance or by date
+* Smart results cache
+* Advanced search capabilities
+* Ispell support
+* Excerpts
+* Grouping results by site
+* Clones (mirrored documents) detection
+* Spaces and subsets
+* Query words highlighting in results
+* Cached compressed local copy of every indexed document
+* HTML templates for easy-to-customize search results
+
+
+	How to use it
+	-------------
+
+Please start with reading INSTALL file there you can find detailed instructions
+about installation, run-time configuration and usage of ASPseek.
+
+
+	Contribution
+	------------
+
+As ASPseek is free software project, any type of contribution is
+very welcome. Please send patches, bug reports, ideas etc. to
+developers <aseek@sw.com.sg>
+
+You can also subscribe to ASPseek users mailing list to ask questions,
+share ideas, and communicate in general with other users and developers.
+To subscribe, please send mail to majordomo@lists.asplinux.ru with the line
+"subscribe aseek-users" in message body.
+
+
+	Disclaimer (see COPYING for details)
+	------------------------------------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA

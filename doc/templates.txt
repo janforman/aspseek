@@ -1,0 +1,407 @@
+ASPseek users have an ability to customize the search results (output of
+s.cgi). You may do it by providing template file s.htm, which should be located
+in etc/ directory of ASPseek installation.
+
+Template file is like a plain HTML file, which is divided into sections.
+Keep in mind that you can just open template file in your favorite browser
+and get the idea of how the search results will look like.
+
+Each section begins with <!--sectionname--> and ends with <!--/sectionname-->
+delimiters, which should reside on a separate line.
+
+Each section consists of HTML formatted text with special meta symbols. Meta
+symbol is one- or two-letter name with the preceding $ sign (examples: $DX,
+$V). Every meta symbol is replaced by it's corresponding string. You can think
+of meta symbols as of variables, which will have their appropriate values while
+displaying the search results.
+
+The following section names are defined:
+
+
+top	This section is included first on every page. You should begin this
+        section	with <HTML><HEAD> and so on. Also, this is a definitive place
+	to provide a search form. There are some special meta symbols you
+	may use in this section:
+	    $A  Argument for FORM ACTION tag with host name and protocol
+		(like http://www.aspseek.com/cgi-bin/s.cgi)
+            $QF Your escaped query concatenated with previous query
+                if search was made within results
+            $q - your query concatenated with previous query if search was
+                made within results, escaped only in
+                "res*" sections
+	    $rN Random number (here N is a number)
+
+	If you want to include some random banners on your pages, please use
+	$rN. You should also place string like RN=xxxx in 'variables' section
+	(see below), which will give you a range 0..xxxx for $rN.
+	You can use up to MAXRANDOM numbers as N (defined in search.h, default
+	is 128). Example: $r0, $r1, $r45 etc.
+
+	Simple top section should be like this:
+
+<!--top-->
+<HTML>
+<HEAD>
+ <TITLE>ASPseek: $Q</TITLE>
+</HEAD>
+<BODY>
+
+<A HREF="http://www.yourbannersite.com/ads.pl?advert=NonSSI&page=$r0">
+<IMG SRC="http://www.yourbannersite.com/ads.pl?ID=your_id&page=$r0"
+HEIGHT=60 WIDTH=468 BORDER=0></A>
+
+<FORM METHOD=GET ACTION="$A">
+ <INPUT TYPE="hidden" NAME="ul" VALUE="">
+ <INPUT TYPE="hidden" NAME="ps" VALUE="20">
+ Search for: <INPUT TYPE="text" NAME="q" SIZE=30 VALUE="$Q">
+ <INPUT TYPE="submit" VALUE="Search!"><BR>
+</FORM>
+<!--/top-->
+
+You can see some variables defined in FORM.
+ul is the filter for URL (so you can limit results to particular site etc..
+And you can use multiple filters delimited by exactly one space).
+ps is default page size (e.g. how many documents to display per page).
+q is the query itself.
+spN where N is web space ID (sp1, sp2...) can be set to "on" or "off".
+If all of these variables are set to "off", then search is performed in the
+whole database.
+gr can be set to "off" to turn off grouping results by sites.
+
+bottom	This section is always included last in every page. So you should
+	provide all closing tags, which have their counterparts in top section.
+	Although it is not obligatory to place this section at the end of
+	template file, but doing so will help you to view your template as an
+	ordinary html file in a browser to get the idea how it is look like.
+	
+	Below is an example of bottom section:
+
+<!--bottom-->
+<P>
+<HR>
+<DIV ALIGN=right><a href="http://www.aspstreet.com/"></A>
+</BODY>
+</HTML>
+<!--/bottom-->
+
+
+restop	This section is included just before the search results. It's not a bad
+	idea to provide some common search results. You can do so by using the
+	following meta symbols:
+	    $f - number of First document displayed on this page
+	    $l - number of Last document displayed on this page
+	    $t - Total number of found documents
+	    $W - information about the number of word forms found
+	         (e.g. if your query was 'html template' $W can be something
+		 like 'html: 10/20  template: 20/30' where first number
+		 is the URL count and second number is the total count)
+	    $Y	 Total time spent to perform query.
+
+	Below is an example of 'restop' section:
+
+<!--restop-->
+<TABLE BORDER=0 WIDTH=100%>
+<TR>
+<TD><small>Matches $f-$l of total <B>$t</B>&nbsp;&nbsp;                         
+Search took $Y seconds.</TD>
+<TD><small>$W</small></TD>
+</TR>
+</TABLE>
+<!--/restop-->
+
+
+res and res2
+	These sections are used for displaying various information about every
+	found document. The following meta symbols are used:
+	    $DU  Document URL
+	    $DE  Escaped document URL (useful for building "cached link")
+	    $DT  Document Title
+	    $DR  Document Rating (as calculated by ASPseek)
+	    $DX  Document teXt (Several excerpts from URL content or 
+		 the first couple of lines to give an idea of what
+		 the document is about in case when excerpts not found
+		 or MaxExcerpts parameter is set to 0).
+	    $DC  Document Content-type (for example, text/html)
+	    $DM  Document Last-Modified date
+	    $DS  Document Size (in bytes)
+	    $DB  Document Size (in kilobytes)
+	    $DZ  Prints template "sizeb" if document size is less than 1024,
+		 otherwise prints template "sizek"
+	    $DN  Document Number (in order of appearance)
+	    $DD  Document Description (from META DESCRIPTION tag)
+	    $DK  Document Keywords (from META KEYWORDS tag)
+	    $CC  "Óached" template if document is text/html or text/plain,
+	         or "textversion" template, if document was converted
+		 from other format
+	    $CL  Clone List (see section 'clone' for details)
+	
+	res is used to display first document for each found site
+	or for all documents is only 1 site is found.
+	res2 is used to display second document for each site
+	if more than 1 site is found.
+	Here is an example of res section:
+
+<!--res-->
+<DL><DT>
+<b>$DN.</b><a href="$DU" TARGET="_blank"><b>$DT</b></a> [<b>$DR</b>]<DD>
+$DX...<BR>
+<b>URL: </b><A HREF="$DU" TARGET="_blank">$DU</A>($DC)<BR>
+$DM, $DS bytes<BR>
+<b>Description: </b>$DD<br>
+<b>Keywords: </b>$DK<br>
+</DL>
+<UL>
+$CL
+</UL>
+<!--/res-->
+
+
+clone	The contents of this section is included in result just instead of
+	$CL meta symbol for every document clone found. This is used to
+	provide all URLs with the same contents (like mirrors etc.).
+	You can use the same $D* meta symbols here as in 'res' section. Of
+	course, some information about clone, like $DS, $DR, DX will be the
+	same so it is of little use to place it here.
+
+	Below is an example of 'clone' section.
+
+<!--clone-->
+<li><A HREF="$DU" TARGET="_blank">$DU</A> ($DC) $DM
+<!--/clone-->
+
+resbot	This is included just after last 'res' section. You usually give a
+	navigation bar here to allow user go to next/previous results page.
+	The meta chars used are:
+	    $V - naVigator (links to previous/next pages)
+	    $w - Prints "inres" template if more than one result is found,
+	         "inres" template should define either checkbox 
+	         "Search in results" or link to "search in results" page.
+
+Navigator is constructed from the following templates:
+
+Previous page: Printed if current page > 0
+<!--navleft-->
+<TD><A HREF="$NH"><IMG...></A><BR><A HREF="$NH">Prev</A></TD>
+<!--/navleft-->
+
+Previous page: Printed if current page == 0
+<!--navleft0-->
+<TD>&nbsp;</TD>
+<!--/navleft0-->
+
+Current Page:
+<!--navbar0-->
+<TD><IMG...></A><BR>$NN</TD>
+<!--navbar0-->
+
+Next Page: Printed if there is a next page only
+<!--navright-->
+<TD><A HREF="$NH"><IMG...></A><BR><A HREF="$NH">Next</A></TD>
+<!--navright-->
+
+Next Page: Printed if there is no next page only
+<!--navright0-->
+<TD>&nbsp;</TD>
+<!--navright0-->
+
+Middle pages in navigation bar:
+<!--navbar1-->
+<TD><A HREF="$HR"><IMG...></A><BR><A HREF="$NH">$NN</A></TD>
+<!--/navbar1-->
+
+
+This is the sample of navigator:
+
+<!--navigator-->
+<TABLE BORDER=0><TR>$NL $NB $NR</TR></TABLE>
+<!--/navigator-->
+
+	This is an example of 'resbot' section:
+
+<!--resbot-->                                                                   
+<HR>                                                                            
+<CENTER>$V</CENTER>
+<!--/resbot-->
+
+notfound
+	As its name implies, this section is displayed in case when
+	no documents are found. You usually give a little message saying that
+	and maybe some hints how to make search less restrictive.
+
+	Below is an example of notfound section:
+
+<!--notfound-->
+<CENTER>
+Sorry, but search hasn't returned results.<P>
+<I>Try to produce less restrictive search query or check words spelling</I>
+</CENTER>
+<HR>
+<!--/notfound-->
+
+
+error	This section is displayed in case some internal error occurred while
+	searching. For example, database server is not running or so.
+	You may provide next meta symbol:
+	    $E - Error text
+
+	Example of error section:
+
+<!--error-->
+<CENTER>
+<FONT COLOR="#FF0000">An error occurred!</FONT>
+<P>
+<B>$E</B>
+</CENTER>
+<!--/error-->
+
+queryerror
+	This section is displayed in case if query contains error
+	like unmatched quote or parenthesis.
+	    $E  Error text
+
+	Example of error section:
+
+<!--queryerror-->
+<CENTER>
+<FONT COLOR="#FF0000">Error in query: $E</FONT>
+<P>
+<B>$E</B>
+</CENTER>
+<!--/queryerror-->
+
+complexPhrase
+	This section is displayed in case if boolean expression
+	is used inside phrase. Intended just to warn user.
+
+complexExpression
+	This section is displayed in case if boolean expression
+	is used in query
+
+moreurls
+	This section is displayed, when more than 1 or 2 URLs is found
+	on particular site. It is displayed in result just instead of
+	$M2, $M1 or $M meta symbols.
+
+	Example of moreurls section:
+
+<!--moreurls-->
+<small><A HREF="$SH"><b>More from site</b></A>
+<A HREF="$SS" TARGET="_blank">$SS</A> ($SC documents)</small>
+<!--/moreurls-->
+
+	The following meta symbols are used:
+	    $SH  URL to get more results from this site.
+	    $SS  URL of home page of this site.
+	    $SC	 Number of documents found on this site.
+
+
+
+include
+	If line <!--include filename --> is encountered, then ASPseek starts
+	loading template definitions from file, specified by "filename",
+	then resumes processing of current file.
+	Example of use: if two or more template definitions differ only
+	in "top" and "bottom" sections, then create one file with sections
+	other than "top" and "bottom", then create two different files with
+	"top" and "bottom" sections and put "<!--include first_name -->"
+	to both of these files.
+
+ressites
+	This section is displayed in case if more than one site is found
+	It is displayed in result just instead of $R meta symbol.
+
+	Example of this section:
+
+<!--ressites-->
+Displaying sites $f-$l of total <B>$t</B> found.
+<!--/ressites-->
+
+
+resurls
+	This section is displayed in case if only 1 site is found.
+	It is displayed in result just instead of $R meta symbol.
+
+	Example of resurls section:
+
+<!--resurls-->
+Displaying documents $f-$l of total <B>$t</B> found on site $SS.
+<!--/resurls-->
+
+
+User defined template
+
+ASPseek treats lines <!--name--> as start of user defined template
+and <!--/name--> as end of user defined template. Name of user
+defined template must begin with alphanumeric character, otherwise
+this line is treated as regular HTML comment belonging to the current
+template. So it is important to put space after "<!--" in comments.
+User defined templates can be used from other templates using $Tname
+meta symbols, where "name" is the name of user defined template.
+
+	Example of using user defined template:
+
+<!-- res0 is the user defined template-->
+<!--res0-->
+<a href="$DU" TARGET="_blank"><b>$DT</b></a> [$DR]<br>
+$DX<BR>
+<small class="gr"><!-- <A HREF="$DU" TARGET="_blank"> -->$DU<!-- </A> -->
+<!-- ($DC)  $DM,--> $DS bytes <A HREF="$A?ch=$DU"> Cached </A> </small>
+$CL
+<!--/res0-->
+
+<!--res-->		<!-- first result from site-->
+<br>
+<b>$DN.</b>
+$Tres0			<!-- print user defined template-->
+<br>
+<!--/res-->
+
+<!--res2-->		<!-- second result from site, display it indented -->
+<BLOCKQUOTE>
+$Tres0			<!-- print user defined template-->
+<br>
+$M2				<!-- print "moreurls" template-->
+</BLOCKQUOTE>
+<!--/res2-->
+
+
+The following section names are used to customize appearance of "cached" pages
+
+cachetop
+	This section is included first on every "cached" page.
+	The following meta symbols are used:
+	    $DU  Document URL
+
+hiopen
+hiexopen
+	These sections are inserted before search term, which should be
+	highlighted (hiopen is used in cached copy, and hiexopen is used in
+	excerpts). The following meta symbols are used:
+	    $H  String value of color to highlight, taken from "hicolors"
+                section.
+
+hiclose
+hiexclose
+	These sections are inserted after search term, which should be
+	highlighted.
+
+hicolors
+	Each line of this section should contain value of color for each search
+	term. Value of color is taken from line with number equal to N mod C,
+	where N is the search term sequential number and C is the total number
+	of lines in this section.
+
+
+There is also a special variables section, in which you can set up 
+some values for search.
+
+Special variables section usually looks like this:
+
+<!--variables
+LocalCharset iso-8851-1
+# DaemonAddress is the IP address and port of search daemon delimited by colon.
+DaemonAddress 1.1.1.1:12345
+# MaxExcerpts is the maximum number of excerpts from original URL content,
+# which displayed for each result.
+MaxExcerpts 2
+-->

@@ -1,0 +1,37 @@
+# stopwords.conf is included by both aspseek.conf and searchd.conf
+#
+# ** Please keep the original stopwords.conf-dist for future reference.
+#
+# Uncomment all needed stopword files, and/or add your own ones.
+
+#######################################################################
+# StopwordFile is used to supply stopwords to ASPseek.
+# Format is:
+#	StopwordFile <lang> <filename> [<charset>]
+# there lang is two-chars ISO language code (en, ru, ...)
+# and file is just a file with stopwords, one word per line.
+# You can use as many StopwordFile directives as you want.
+#
+# Below listed stopwords file included into distribution.
+# Please see comments and contents of that files before using them.
+
+StopwordFile en stopwords/english iso8859-1
+
+#StopwordFile ct stopwords/catalan iso8859-1
+#StopwordFile cz stopwords/czech iso8859-1
+#StopwordFile cz stopwords/czech.iso88592 iso8859-2
+#StopwordFile dk stopwords/danish iso8859-1
+#StopwordFile nl stopwords/dutch iso8859-1
+#StopwordFile fr stopwords/french iso8859-1
+#StopwordFile de stopwords/german windows-1250
+#StopwordFile hu stopwords/hungarian iso8859-1
+#StopwordFile it stopwords/italian iso8859-1
+#StopwordFile it stopwords/italian-small iso8859-1
+#StopwordFile no stopwords/norwegian iso8859-1
+#StopwordFile pl stopwords/polish iso8859-2
+#StopwordFile pt stopwords/portuguese iso8859-2
+#StopwordFile ru stopwords/russian koi8-r
+#StopwordFile sk stopwords/slovak iso8859-2
+#StopwordFile es stopwords/spanish iso8859-1
+#StopwordFile tr stopwords/turkish iso-8859-9
+#StopwordFile ua stopwords/ukrainian koi8-u

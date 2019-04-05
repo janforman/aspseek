@@ -1,0 +1,12 @@
+This is directory with stopwords file for different languages.
+
+To make ASPseek use stopwords, add appropriate StopwordFile directives to your
+stopwords.conf file (which is included by both aspseek.conf and searchd.conf).
+
+If you can't find your language here, you are welcome to create one and send it
+to aseek@sw.com.sg, so we will include it in next ASPseek version. Format is
+simple - one stopword per line, lines started with # are comments. If you have
+several charsets for your language, please note the charset used in file.
+
+Please take into account that stopword length is limited to 15 bytes now. This
+is more than enough, since stopwords are short anyway.

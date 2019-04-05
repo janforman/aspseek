@@ -1,0 +1,422 @@
+<!--
+
+    This is default template file for ASPseek 1.2
+
+    ** Please keep the original s.htm-dist for future reference.
+    ** See doc/templates.txt for detailed information.
+
+	Don't forget to put needed images from ./img directory
+	to /img directory under your Web server DocumentRoot.
+
+-->
+<!--variables
+
+# 'variables' section defines some global parameters.
+# Each line starting with # is a comment.
+
+# DaemonAddress is used by s.cgi to connect to searchd
+# Format:
+# DaemonAddress ip.add.res.sss[:port]
+# You _should_ put at least one DaemonAddress for s.cgi to work.
+# You _can_ put several DaemonAddress variables, in that case s.cgi
+# will connect to all searchd, retrieve results from every searchd
+# and merge it.
+#
+# WARNING: You can't put DNS name (www.myhost.com) in DaemonAddress, only
+# numeric IP address. This is because name lookup will slow down s.cgi
+# considerably.
+#
+# If port is not given default value will be used (12345 for now)
+#
+# example: DaemonAddress 194.87.78.112:9091
+DaemonAddress 127.0.0.1
+
+# PagesPerScreen defines how many links to other search result pages
+# will be show if there are many results found.
+# Default value is 10.
+#PagesPerScreen 10
+
+# ResultsPerPage defines how many results will be shown on one page.
+# However, this is overwritten by ps=xxx cookie if set, and ps=xxx
+# s.cgi parameter. So this is default value if ps is not given.
+# Note that less value means faster search, so don't set it high.
+# Default value is 10.
+#ResultsPerPage 10
+
+# s.cgi puts a small pieces from resulting document (a.k.a. excerpts)
+# with found words/phrases highlighted.
+# MaxExcerpts is limiting the number of such excerpts.
+# If MaxExcerpts is set to zero (or no excerps were found)
+# the first few lines from resulting document are shown.
+#
+# Please note that excerpt generation takes some CPU time, but it is hard
+# to estimate it now. Each result page is fully unzipped during excerpt
+# generation and scanned until required excerpts are found.
+#
+# Default value is 0.
+MaxExcerpts 2
+
+# MaxExcerptLen is the upper limit of length of each excerpt
+# Default value is 200
+#MaxExcerptLen 500
+
+
+# "Clones no" is used to disable "clones" feature
+# (clones are the same documents under different URLs)
+# Uncomment next line if you do not want to detect and show clones.
+#Clones	no
+
+#Error messages
+#
+ER_STOPWORDS    Only stopword(s) are used in query. You must specify at least one non-stop word
+ER_EXTRASYMBOL  Extra symbols at the end
+ER_EMPTYQUERY   Empty query
+ER_TOOSHORT     Too few letters or digits are used at the beginning of pattern
+ER_NOQUOTED     Unmatched string quote
+ER_NOPARENTHESIS Unmatched parenthesis
+ER_NOSEARCHD	Can not connect to search daemon
+# End of variables section
+-->
+
+<!--top-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html>
+<head>
+
+<style type="text/css"><!--
+body, td, .text	{FONT-FAMILY: "DejaVu Sans Condensed", Tahoma, Verdana, Geneva, Arial, Helvetica, sans-serif; FONT-SIZE: 12px}
+a:link	{COLOR: #003399}
+a:visited	{COLOR: #666633}
+a:active, a:hover	{COLOR: #3366CC}
+.small, small	{FONT-SIZE: 11px; FONT-FAMILY: "DejaVu Sans Condensed", Tahoma, Geneva, sans-serif}
+.gr	{COLOR: #006600}
+//--></style>
+
+<title>ASPseek: $Q</title>
+<script><!-- function setFocus() {document.f.q.focus();} // --></script>
+</head>
+
+<body bgcolor="#ffffff">
+<form method="get" name="f" action="$A">
+<table width="100%" border="0">
+<tr>
+<td valign="bottom"><img src="/img/aspseek-big.png" width="168" height="66" alt="ASPseek" border="0" align="left"/></td>
+<td valign="bottom" align="center" colspan="2">
+ Search for <input type="text" name="q" SIZE="30" value="$Q">
+ <input type="hidden" name="cs" value="utf-8">
+ <input type="submit" value="Search with ASPseek">
+ <input type="submit" name="t" value="Take me there!">
+</td>
+<td>
+<!-- links to advanced search, preferences etc. goes here -->
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<input type="checkbox" name="s" value="date">Sort results by date<P>
+
+Results per page:
+<select name="ps">
+<option value="10" selected="$ps">10
+<option value="20" selected="$ps">20
+<option value="50" selected="$ps">50
+</select>
+</td><td>
+<table cellpadding=2 cellspacing=0 border=0 width=600>
+<CAPTION>
+Limit results to pages published within a specified period of time.
+<small><i>(Please select only one option)</i></small>
+</CAPTION>
+<tr>
+<td valign="middle"><input type="radio" name="dt" value="back" CHECKED></td>
+<td><select name="dp">
+<option value="0" selected="$dp">anytime
+<option value="1d" selected="$dp">in the last day
+<option value="7d" selected="$dp">in the last week
+<option value="14d" selected="$dp">in the last 2 weeks
+<option value="1m" selected="$dp">in the last month
+<option value="3m" selected="$dp">in the last 3 months
+<option value="6m" selected="$dp">in the last 6 months
+<option value="1y" selected="$dp">in the last year
+<option value="2y" selected="$dp">in the last 2 years
+</select>
+</td>
+</tr>
+<tr>
+<td valign="middle"><input type="radio" name="dt" value="er">
+</td>
+<td><select name="dx">
+<option value="1" selected="$dx">After
+<option value="-1" selected="$dx">Before
+</select>
+
+or on
+
+<select name="dm">
+<option value="0" selected="$dm">January
+<option value="1" selected="$dm">February
+<option value="2" selected="$dm">March
+<option value="3" selected="$dm">April
+<option value="4" selected="$dm">May
+<option value="5" selected="$dm">June
+<option value="6" selected="$dm">July
+<option value="7" selected="$dm">August
+<option value="8" selected="$dm">September
+<option value="9" selected="$dm">October
+<option value="10" selected="$dm">November
+<option value="11" selected="$dm">December
+</select>
+<input type=text name="dd" value="$dd" size="2" maxlength="2">
+,
+<select name="dy" >
+<option value="2007" selected="$dy">2007
+<option value="2006" selected="$dy">2006
+<option value="2005" selected="$dy">2005
+<option value="2004" selected="$dy">2004
+<option value="2003" selected="$dy">2003
+</select>
+</td>
+</tr>
+</TABLE>
+
+</td></tr>
+
+</table>
+</form>
+<!--/top-->
+
+
+<!--hiopen-->
+<b style="color:black;background-color:#$H">
+<!--/hiopen-->
+
+<!--hiclose-->
+</b>
+<!--/hiclose-->
+
+<!--hiexopen-->
+<b>
+<!--/hiexopen-->
+
+<!--hiexclose-->
+</b>
+<!--/hiexclose-->
+
+<!--exopen-->
+<br />...
+<!--/exopen-->
+
+<!--exclose-->
+...
+<!--/exclose-->
+
+<!--hicolors-->
+ffff66
+ff66ff
+66ffff
+ff6666
+6666ff
+66ff66
+<!--/hicolors-->
+
+<!--cachetop-->
+<table border=0 cellpadding=2 cellspacing=0 width=100%>
+<tr><td bgcolor="#FF6600">
+<table border=0 bgcolor="#FFFFFF" cellpadding=10 cellspacing=0 width=100%>
+<tr>
+<td>
+<font color="#000000">
+<small>This is <b><font color="#CC6600">ASP</font><font color="#666666">seek</font>
+</b>'s cache of <a href="$DU"><font color=blue>$DU</font></a>.<br />
+<b><font color="#CC6600">ASP</font><font color="#666666">seek</font></b>'s cache
+is the snapshot that we took of the page as we crawled the web.<br />
+The page may have changed since that time.  Click here for the <a href="$DU">
+<font color=blue>current page</font></a> without highlighting.</small>
+<br />&nbsp;<br /><center><small><i>We are neither affiliated with the authors
+of this page nor responsible for its content.</i></small></center>
+</font>
+</td></tr>
+</table>
+</td></tr>
+</table>
+<!--/cachetop-->
+
+<!--sizeb-->
+$DS bytes
+<!--/sizeb-->
+
+<!--sizek-->
+$DB Kb
+<!--/sizek-->
+
+<!--ressites-->
+<table cellpadding=3 cellspacing=0 width="100%" bgcolor="#CCCC99" border=0>
+<tr><td align="center">
+<small class=small>
+Sites $f-$l of <b>$t</b>&nbsp;&nbsp;
+<!--/ressites-->
+
+<!--resurls-->
+<table cellpadding="3" cellspacing="0" width="100%" bgcolor="#CCCC99" border="0">
+<tr><td align="center">
+<span class="small">
+Documents $f-$l of <b>$t</b> found on site $SS &nbsp;&nbsp;
+</span>
+<!--/resurls-->
+
+<!--restop-->
+<table cellpadding="3" cellspacing="0" width="100%" bgcolor="#CCCC99" border="0">
+<tr>
+<td align="center">
+<span class="small">Documents $f-$l of total <b>$t</b> found. &nbsp;&nbsp;
+Search took $Y seconds.</span>
+</td></tr>
+</table>
+$V
+<!--/restop-->
+
+<!--moreurls-->
+<small>&gt;&gt;&nbsp;<a href="$SH">More results from $SS</a> ($SC documents)</small>
+<!--/moreurls-->
+
+<!--res-->
+<br />
+<table>
+<tr>
+<td><b>$DN.</b></td>
+$Tres0
+</td></tr>
+</table>
+<br />
+<!--/res-->
+
+<!--res2-->
+<blockquote>
+<table>
+<tr>
+<td></td>
+$Tres0
+<br />
+$M2
+</td></tr>
+</table>
+</blockquote>
+<!--/res2-->
+
+<!--res0-->
+<td>
+<a href="$DU" target="_blank"><b>$DT</b></a> [$DR]<br />
+</td>
+</tr>
+<tr><td></td>
+<td>
+$DX...<br />
+<small class="gr"><!-- <a href="$DU" TARGET="_blank"> -->$DU<!-- </a> -->
+<!-- ($DC)  $DM,--></small><small>$DZ</small>$CC
+$CL
+<!--/res0-->
+
+
+<!--resbot-->
+<hr />
+<center>
+$V
+</center>
+<!--/resbot-->
+
+<!--clone-->
+<br /><small class="gr"><a href="$DU" TARGET="_blank">$DU</a> ($DC) $DM</small>
+<!--/clone-->
+
+<!--cached-->
+<small><a href="$A?q=$QF$P&amp;ch=$DE&amp;fm=$fm">Cached</a></small>
+<!--/cached-->
+
+<!--textversion-->
+<small><a href="$A?q=$QF$P&amp;ch=$DE&amp;fm=$fm">Text version</a></small>
+<!--/textversion-->
+
+<!--navigator-->
+<center>
+<table border="0" cellspacing="2" cellpadding="0"><tr>
+$NL $NB $NR
+</tr></table>
+</center>
+<!--/navigator-->
+
+<!--navleft-->
+<td valign="bottom" align="right"><small>Result pages:</small></td>
+<td valign="bottom" align="right"><a href="$NH"><img src="/img/asps.png" border="0" alt=""/><br /><small>Previous</small></a></td>
+<!--/navleft-->
+
+<!--navleft0-->
+<td valign="bottom" align="right"><img src="/img/asps.png" border="0" alt=""/><br />
+<small>Result pages:</td>
+<!--/navleft0-->
+
+<!--navbar1-->
+<td valign="bottom"><a href="$NH"><img src="/img/e.png" border="0" width="11" height="19" alt=""/><br /><small>$NP</small></a></td>
+<!--/navbar1-->
+
+<!--navbar0-->
+<td valign="bottom"><img src="/img/e_.png" width="11" height="19" border="0" alt=""/><br /><small>$NP</small></td>
+<!--/navbar0-->
+
+<!--navright-->
+<td valign="bottom"><a href="$NH"><img src="/img/k.png" border="0" width="12" height="19" alt=""/><br /><small>Next</small></a></td>
+<!--/navright-->
+
+<!--navright0-->
+<td valign="bottom"><img src="/img/k.png" border="0" width="12" height="19" alt=""/><br /><small>&nbsp;</small></td>
+<!--/navright-->
+
+<!--complexPhrase-->
+<span class="gr">
+<br /><b>
+Attention, you have used logical expression inside phrase. <a href="http://www.aspseek.com/help.html">Help</a></b><br /></span>
+<!--/complexPhrase-->
+
+<!--complexExpression-->
+<span class="gr">
+<br /><b>
+Attention, you have used complex logical expression in query. <a href="http://www.aspseek.com/help.html">Help</a></b><br /></span>
+<!--/complexExpression-->
+
+<!--queryerror-->
+<div style="COLOR:#ff0000; TEXT-ALIGN: center">Error in query: <b>$E</b></div>
+<!--/queryerror-->
+
+<!--inres-->
+<tr>
+<td colspan="3">
+<input type="checkbox" name="in">Search within results<br />
+</td>
+<td>
+</td>
+</tr>
+<!--/inres-->
+
+<!--notfound-->
+<center>
+Sorry, but search returned no results.<p>
+<i>Try to compose less restrictive search query or check spelling.</i>
+</center>
+<hr />
+<!--/notfound-->
+
+<!--noquery-->
+<center>You haven't typed any word(s) to search for.</center>
+<hr />
+<!--/noquery-->
+
+<!--error-->
+<div style="COLOR:#ff0000; TEXT-ALIGN: center">An error occured! <b>$E</b></div>
+<!--/error-->
+
+
+<!--bottom-->
+</body>
+</html>
+<!--/bottom-->

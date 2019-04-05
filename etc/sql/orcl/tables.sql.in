@@ -1,0 +1,449 @@
+# WARNING: DON'T use tables.sql.in file; use tables.sql instead.
+# tables.sql.in is just a template for configure script which
+# generates tables.sql depending on options you have selected.
+----------------------------------------------------------------
+-- This SQL script will create the necessary tables for ASPseek.
+----------------------------------------------------------------
+
+-- drop table wordurl;
+-- drop table wordurl1;
+-- drop table urlword;
+-- drop table urlwords00;
+-- drop table urlwords01;
+-- drop table urlwords02;
+-- drop table urlwords03;
+-- drop table urlwords04;
+-- drop table urlwords05;
+-- drop table urlwords06;
+-- drop table urlwords07;
+-- drop table urlwords08;
+-- drop table urlwords09;
+-- drop table urlwords10;
+-- drop table urlwords11;
+-- drop table urlwords12;
+-- drop table urlwords13;
+-- drop table urlwords14;
+-- drop table urlwords15;
+-- drop table sites;
+-- drop table stat;
+-- drop table robots;
+-- drop table subsets;
+-- drop table spaces;
+-- drop table tmpurl;
+-- drop table wordsite;
+-- drop table citation;
+-- drop table countries;
+-- drop table cache;
+-- drop table rescache;
+-- DROP SEQUENCE next_word_id;
+-- DROP SEQUENCE next_url_id;
+-- DROP SEQUENCE next_site_id;
+-- DROP SEQUENCE next_subset_id;
+
+
+CREATE SEQUENCE next_word_id;
+
+create table wordurl (
+	word @ORACLE_WORD_TYPE@ not null,
+	word_id number(11) not null primary key,
+	urls blob default empty_blob(),
+	urlcount number(11),
+	totalcount number(11)
+);
+create unique index wordurl_word_idx on wordurl(word);
+
+create table wordurl1 (
+	word @ORACLE_WORD_TYPE@ not null,
+	word_id number(11) not null,
+	urls blob default empty_blob(),
+	urlcount number(11),
+	totalcount number(11)
+);
+create unique index wordurl1_word_idx on wordurl1(word);
+create unique index wordurl1_word_id_idx on wordurl1(word_id);
+
+CREATE SEQUENCE next_url_id;
+
+create table urlword (
+	url_id number(11) not null primary key,
+	site_id number(11) not null,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	url varchar2(@URL_LEN@) not null,
+	next_index_time INT NOT NULL,
+	status number(11) DEFAULT '0' NOT NULL,
+	crc char(32),
+	last_modified varchar2(32),
+	etag varchar2(48),
+	last_index_time number(11),
+	referrer number(11) DEFAULT '0' NOT NULL,
+	tag number(11) DEFAULT '0' NOT NULL,
+	hops number(11) DEFAULT '0' NOT NULL,
+	@ORACLE_ORIGIN@
+	redir number(11)
+);
+create unique index urlword_url_idx on urlword(url);
+create index urlword_next_index_time_idx on urlword(next_index_time);
+create index urlword_h_next_index_time_idx on urlword(hops,next_index_time);
+create index urlword_crc_idx on @ORACLE_CRC_INDEX@;
+
+create table urlwords00 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords00_url_id_idx on urlwords00(url_id);
+
+create table urlwords01 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords01_url_id_idx on urlwords01(url_id);
+
+create table urlwords02 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords02_url_id_idx on urlwords02(url_id);
+
+create table urlwords03 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords03_url_id_idx on urlwords03(url_id);
+
+create table urlwords04 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords04_url_id_idx on urlwords04(url_id);
+
+create table urlwords05 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords05_url_id_idx on urlwords05(url_id);
+
+create table urlwords06 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords06_url_id_idx on urlwords06(url_id);
+
+create table urlwords07 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords07_url_id_idx on urlwords07(url_id);
+
+create table urlwords08 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords08_url_id_idx on urlwords08(url_id);
+
+create table urlwords09 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords09_url_id_idx on urlwords09(url_id);
+
+create table urlwords10 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords10_url_id_idx on urlwords10(url_id);
+
+create table urlwords11 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords11_url_id_idx on urlwords11(url_id);
+
+create table urlwords12 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords12_url_id_idx on urlwords12(url_id);
+
+create table urlwords13 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords13_url_id_idx on urlwords13(url_id);
+
+create table urlwords14 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords14_url_id_idx on urlwords14(url_id);
+
+create table urlwords15 (
+	url_id number(11) NOT NULL,
+	deleted number(4) DEFAULT 0 NOT NULL,
+	wordcount number(11),
+	totalcount number(11),
+	content_type varchar2(48) default '',
+	charset varchar2(32) default '',
+	title @ORACLE_TITLE_TYPE@ @ORACLE_DEF@,
+	txt @ORACLE_TXT_TYPE@ @ORACLE_DEF@,
+	docsize number(11) DEFAULT '0' NOT NULL,
+	keywords @ORACLE_KEYWRD_TYPE@ @ORACLE_DEF@,
+	description @ORACLE_DESCR_TYPE@ @ORACLE_DEF@,
+	lang varchar2(2) default '',
+	words blob default empty_blob(),
+	hrefs blob default empty_blob()
+);
+create unique index urlwords15_url_id_idx on urlwords15(url_id);
+
+CREATE TABLE robots (
+  hostinfo varchar2(127) default '',
+  path varchar2(127) default ''
+);
+create index robots_hostinfo_idx on robots(hostinfo);
+
+CREATE SEQUENCE next_site_id;
+
+create table sites (
+	site_id number(11) not null primary key,
+	site varchar2(128) not null
+);
+create unique index sites_site_idx on sites(site);
+
+create table stat (
+	addr varchar2(128),
+	proxy varchar2(128),
+	query varchar2(255),
+	ul varchar2(255),
+	sp varchar2(255),
+	site number(11),
+	np number(11),
+	ps number(11),
+	sites number(11),
+	urls number(11),
+	"start" number(15,3),
+	finish number(15,3),
+	referer varchar2(255)
+);
+
+CREATE SEQUENCE next_subset_id;
+
+create table subsets (
+	subset_id number(11) not null primary key,
+	mask varchar2(128) NOT NULL
+);
+create unique index subsets_mask_idx on subsets(mask);
+
+create table spaces (
+	space_id number(11) not null,
+	site_id number(11) not null
+);
+create index spaces_space_id_site_id_idx on spaces(space_id, site_id);
+
+create table tmpurl (
+	url_id number(11) not null,
+	thread number(11) not null
+);
+
+create table wordsite (
+	word varchar2(32),
+	sites blob default empty_blob()
+);
+create unique index uwordsite_word_idx on wordsite(word);
+
+create table citation (
+	url_id number(11) not null,
+	referrers blob default empty_blob()
+);
+create unique index citation_idx on citation(url_id);
+
+create table countries (
+	country varchar2(20),
+	addr number(11)  not null,
+	mask number(11)  not null,
+	expires number(11) not null
+);
+
+create table rescache (
+        qkey number(11),
+        urls blob default empty_blob()
+);
+create unique index qkey_idx on rescache(qkey);

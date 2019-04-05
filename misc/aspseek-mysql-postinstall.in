@@ -1,0 +1,127 @@
+#!/bin/bash
+# $Id: aspseek-mysql-postinstall.in,v 1.15 2002/07/20 13:03:59 kir Exp $
+# Copyrigth (C) 2001, 2002 by SWsoft. Licensed under GNU GPL.
+# Author: Kir Kolyshkin <kir@asplinux.ru>
+# Usage: aspseek-mysql-postinstall [mysql_root_password]
+#
+# This script is intended to run after ASPseek DBMS backend library
+# installation. Its purpose is to create DBMS user and database, then
+# create all necessary SQL tables.
+#
+# Return code is 0 if everything went ok, 1 if database was not created,
+# and 2 if database was created, but we were unable to write to db.conf.
+
+## Some options
+MYSQL=mysql
+MYSQLADMIN=mysqladmin
+MYSQL_ROOT_USER=root
+MYSQL_ROOT_PASSWD="$1"
+MYSQL_TABLES_FILE=@sysconfdir@/sql/mysql/tables.sql
+ASPSEEK=aspseek
+ASPSEEK_SQLUSER=${ASPSEEK}12
+ASPSEEK_SQLDB=${ASPSEEK}12
+DB_CONF_FILE=@sysconfdir@/db.conf
+
+## --- You don't need to edit anything below ---- ##
+function bad_exit()
+{
+	echo "Note that aspseek's database WAS NOT CREATED succesfully!"
+	echo "Try to fix the above errors and re-run $0 again."
+	exit 1
+}
+
+function mkdbpasswd()
+{
+	if which mkpasswd >/dev/null 2>&1; then
+		DB_PASSWD=`mkpasswd`
+	fi
+	if test "x$DB_PASSWD" != "x"; then
+		DB_PASSWD=`echo $DB_PASSWD | tr -d "\'\"\\\\\:@/"`
+		return 0
+	fi
+	if test -r /dev/urandom; then
+		BAD_PASSWD=1
+		while test $BAD_PASSWD -ne 0; do
+			DB_PASSWD=`cat /dev/urandom | head -n 1 | \
+				tr -cd "[0-9a-zA-Z]" | tail -c 14`
+			echo $DB_PASSWD | awk \
+				'{if (length < 6) exit 1; else exit 0;}'
+			BAD_PASSWD=$?
+		done
+	else
+		DB_PASSWD="Ad1+PaSsWd<";
+	fi
+	# first letter should be letter
+	DB_PASSWD=B${DB_PASSWD};
+}
+
+# Check that mysql and mysqladmin can be found
+for PROG in $MYSQL $MYSQLADMIN; do
+	if ! which $PROG >/dev/null 2>&1 ; then
+		echo "ERROR: Can't find program '$PROG'."
+		echo "Either MySQL is not installed,"
+		echo "or the path to $PROG is not in your PATH variable."
+		bad_exit
+	fi
+done
+
+# Check that file with "CREATE TABLE" statements exists
+if ! test -f $MYSQL_TABLES_FILE; then
+	echo "ERROR: File $MYSQL_TABLES_FILE does not exists."
+	echo "That possibly means that you have not installed ASPseek yet."
+	bad_exit
+fi
+
+MYSQL_ROOT_ARGS="-u$MYSQL_ROOT_USER"
+if test "${MYSQL_ROOT_PASSWD}xx" != "xx"; then
+	MYSQL_ROOT_ARGS="$MYSQL_ROOT_ARGS -p$MYSQL_ROOT_PASSWD";
+fi
+
+# Check if MySQL is up and running and we have root access to MySQL
+MYSQL_ERR=`$MYSQLADMIN $MYSQL_ROOT_ARGS ping 2>&1`
+ERRCODE=$?
+if test $ERRCODE -ne 0; then
+	if echo $MYSQL_ERR | grep "Access denied" >/dev/null 2>&1; then
+		echo "ERROR: Access to MySQL as root user denied."
+		echo "Have you set MySQL root password? If yes, please run this script"
+		echo "with MySQL root password as an argument."
+	else
+		echo "ERROR: Seems that MySQL is not running on this host."
+	fi
+	bad_exit
+fi
+
+function failure(){
+	sleep 1
+	echo "ERROR: MySQL command '$1' failed with error code $2."
+	echo "Look at the error message above to find out possible reason."
+	bad_exit
+}
+
+function cantwrite(){
+	echo "WARNING: Can't write to $DB_CONF_FILE (error code $1)."
+	echo "Please put the following line to the file $DB_CONF_FILE:"
+	echo "  $DB_ADDR_STR"
+	echo "Note that aspseek's MySQL user and database WAS CREATED succesfully."
+	exit 2
+}
+
+# Generate random password for MySQL aspseek user
+mkdbpasswd
+
+# Create new database
+echo "CREATE DATABASE ${ASPSEEK_SQLDB};" | $MYSQL $MYSQL_ROOT_ARGS || failure "CREATE DATABASE" $?
+# Create SQL tables
+$MYSQL $MYSQL_ROOT_ARGS ${ASPSEEK_SQLDB} < $MYSQL_TABLES_FILE || failure "CREATE TABLE" $?
+
+# Add MySQL user and grant it with privileges.
+ADD_USER="GRANT ALL PRIVILEGES ON ${ASPSEEK_SQLDB}.* TO ${ASPSEEK_SQLUSER}@localhost IDENTIFIED BY '$DB_PASSWD';"
+echo $ADD_USER | $MYSQL $MYSQL_ROOT_ARGS mysql || failure "GRANT" $?
+
+# Putting the database connection info into db.conf
+DB_ADDR_STR="DBAddr mysql://${ASPSEEK_SQLUSER}:${DB_PASSWD}@localhost/${ASPSEEK_SQLDB}/"
+echo $DB_ADDR_STR > $DB_CONF_FILE || cantwrite $?
+chmod 640 $DB_CONF_FILE
+chown aspseek $DB_CONF_FILE || \
+echo -e "You should add 'aspseek' user to the system and run\n" \
+"chown aspseek $DB_CONF_FILE as root" 2>&1

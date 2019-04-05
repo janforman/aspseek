@@ -1,0 +1,257 @@
+This is ASPseek FAQ.
+
+Q: I compiled and installed ASPseek without any errors, and I have latest MySQL
+up-n-running, but then I run index, it complaints like this:
+
+    index: error while loading shared libraries: libmysqlclient.so.10: cannot
+    open shared object file: No such file or directory
+
+A: This is not ASPseek bug. You just haven't tell dynamic object linker
+where to get MySQL client library. Please find location of libmysqlclient.so*
+on your machine and put the path to it to /etc/ld.so.conf. For example, on my
+box I have MySQL installed to /home/mysql, so I did
+    # echo "/home/mysql/lib/mysql" >> /etc/ld.so.conf
+After adding that path you should run
+    # /sbin/ldconfig -v | grep libmysqlclient
+If you'll see something like
+    libmysqlclient.so.10 -> libmysqlclient.so.10.0.0
+then everything is OK now and you can use ASPseek.
+
+Another way is to set environment variable LD_LIBRARY_PATH to contain the path
+to libmysqlclient.so before running index and searchd. Please consult docs
+for dynamic linker for more information.
+
+
+Q: For many hours, I am indexing a large site and I notice that even if
+the database is updated, when I try to search, s.cgi does not seem to
+retrieve any expected results. I stopped the index, but s.cgi still can't
+find anything. What's wrong? Should I wait till index finishes?
+
+A: Yes, you should. Or, if your site(s) is/are really very big and you
+can't wait to try the search, you can stop the index (by running index -E
+in other terminal) and run index -D. This will put the indexed data from
+delta files used for indexing to the database used for searching, and
+perform some other needed things, like ranks and lastmods calculations.
+On a low-end hardware with small amounts of RAM, you can use sequence of
+index -n <num>; index -D commands in loop, there num is number of URLs
+index should process before terminating. Note that if index -D runs for
+long long time, you need to read the next Q/A.
+
+Q: I feel that on my big box index is slow. I have a lots of memory, what's
+wrong?
+
+A: Probably you haven't tuned your SQL server, so it uses too little memory.
+If you use MySQL, try to increase its buffer_size. You can do that by
+passing -O key_buffer=xxxM option to safe_mysqld, there xxx is number of
+megabytes of RAM that MySQL will use for its key buffer. We have set it to
+256M on www.aspseek.com. Please consult MySQL manual for more information.
+
+Other way to speed up index process if you are indexing many servers is to
+specify -N <num> option to index. This will create <num> threads working at
+the same time indexing different servers. It makes no sense to specify <num>
+greater than number of servers being indexed. You can also use -R <num>
+option to increase number of DNS resolvers, if you see way too many
+"Waiting for resolver" messages from index.
+
+
+Q: My binaries are way TOO big. What's wrong with it?
+
+A: Nothing. This is mostly debug info produced with -g switch to compiler.
+You can either set CXXFLAGS environment variable to something not containing
+-g just before running configure, or you can "make install-strip" instead of
+"make install" to strip your binaries while installing (this is a good idea
+anyway if you don't have plans to debug ASPseek).
+
+
+Q: index -N xxx do not help to increase speed of indexing. What's wrong?
+
+A: You probably have only one server, and index is written to do only
+one request at a time to one site, like any other polite robot. Some people
+even don't like this, so you can use MinDelay aspseek.conf command to further
+reduce Web server load.
+
+If it is your local server, yes, you can do anything with it, including many
+simultaneous requests. But ASPseek just can't do it now, maybe we'll implement
+it as an option in future versions.
+
+
+Q: What should I do to setup ASPseek so it will be able to index and search
+for words in my native language?
+
+A: First of all, do not use non-unicode mode in ASPseek - it is deprecated and
+will be removed in 1.4.x. Second, make sure that ucharset.conf file is included
+in both aspseek.conf and searchd.conf. Third, check that ucharset.conf loads
+all character set tables you need, and defines all charset aliases your web
+servers may return (say, for windows-1251 charset some servers return cp1251,
+cp-1251, 1251 and so on - so all these variations must be defined using
+CharsetAlias directive). It is also a good idea to uncomment StopwordsFile 
+for your language.
+
+If something does not work as expected (you have some "problem" pages), please
+check the charset headers web server returns with these pages - most probably
+the problem is in incorrect or absent charset. In case of incorrect charset,
+go blame webmaster/sysadmin of that incorrectly configured server. In case of
+absent charset information, recompile ASPseek with --enable-charset-guesser
+option to configure script, and make sure aspseek.conf directly or indirectly
+has all needed LangmapFile directives.
+
+See also the next frequently asked question.
+
+
+Q: s.cgi displays my (German/Russian/Chinese/whatever) characters wrong, and
+can't search for the words with such characters, too. What should I do?
+
+A: Configure ASPseek for proper charset. Let's assume that you need charset
+iso-8859-1. This charset name should be defined in ucharset.conf
+
+First, add <INPUT TYPE="hidden" NAME=cs VALUE="iso8859-1"> to the FORM in
+s.htm file. Second, check if the line "Include ucharset.conf" is in the
+searchd.conf file. Check if charset iso-8859-1 is defined in "ucharset.conf".
+Restart searchd if you have made any changes to its configuration files.
+
+
+Q: I have reached the MySQL table size limit with urlword table. It's about
+4 Gb now. Is it possible to fix it so I can index more URLs?
+
+A: Yes. By default MySQL table size is limited to about 4Gb, but it can be
+changed. To get an increase over 4Gb in Max_data_length you need to set
+MAX_ROWS large enough that AVG_ROW_LENGTH * MAX_ROWS is greater than 4Gb.
+
+The following example illustrates how it can be done from command line mysql
+client:
+
+    mysql> show table status;
+    +------------+ ... ----------------+-----------------+ ...
+    | Name       |      Avg_row_length | Max_data_length |
+    +------------+ ... ----------------+-----------------+ ...
+    | urlword    |                 152 |      4294967295 |
+    +------------+ ... ----------------+-----------------+ ...
+    mysql> alter table urlword MAX_ROWS=100000000;
+    mysql> show table status;
+    +------------+ ... ----------------+-----------------+ ...
+    | Name       |      Avg_row_length | Max_data_length |
+    +------------+ ... ----------------+-----------------+ ...
+    | urlword    |                 152 |   1099511627775 |
+    +------------+ ... ----------------+-----------------+ ...
+
+
+Q: If I start index for the second time, will all documents need to be
+re-indexed all over again?
+
+A: No, index is wise. First, it uses Period command from aspseek.conf,
+and tries to re-index document only if that period is expired.
+
+Second, if period is really expired (or you run index with -a flag), it sends
+If-Modified-Since and If-None-Match headers with the values that were in
+Last-Modified and ETags headers sent by server during previous indexing, so
+web server double checks that document was really modified, and sends it
+only if it really was. Also, if server sends Expires header and the its value
+is more than (now + Period from aspseek.conf), index use that value instead
+of now + Period. For more details on these headers, see RFC 2616.
+
+Of course, it all depends on server, and dynamic content usually gets
+resent anyway, even if it's absolutely the same, because server doesn't
+know anything about dynamic content. To avoid re-parsing such document,
+index first calculates its md5 checksum, and if it's not changes, no
+parsing it done. This improves indexing speed a bit.
+
+
+Q: What are the files in var/<DBName>/NNw/ used for?
+
+A: These are files of reverse index. It is these files that searchd uses
+for search itself. Each file contains information about particular word.
+File is created only if it's size > 1K, otherwise data is stored in the BLOB
+"wordurl.urls". Name of each file is the word ID that stored in the field
+"wordurl.word_id".
+
+
+Q: How can I restrict search to different sets of sites (for example,
+"Linux sites", "Windows sites" etc.)?
+
+A: You can use Web spaces for it. However, we do not yet have a front-end for
+dealing with spaces. So, to create web spaces (groups) and assign sites to
+them, please perform the following steps:
+
+a) Assign numeric ID to spaces, so let's group "Linux" will have ID 1 and
+group "Windows" will have ID 2.
+
+b) Insert into database table "spaces" records with appropriate fields
+space_id (1 or 2) and site ID (site ID can be obtained from field
+sites.site_id) using SQL INSERT command, example:
+    INSERT INTO spaces(space_id, site_id) VALUES (1, 1)
+and so on.
+
+c) Run "index -B". This command will create binary files spN, where N is the
+space ID in the directory var/<DBName>/subsets.
+These files are used by "searchd" if search is restricted by space(s). Note
+that these files are also created after saving of delta files (index -D).
+Now database is ready to search within web spaces.
+
+To search within particular web space(s) use spN=on parameter of s.cgi,
+where N is the number of web space. You can use multiple spN parameters.
+If values of all spN parameters is off, then search will not be restricted
+by any space.
+
+Examples:
+    s.cgi?sp1=on&sp2=off&...
+    s.cgi?sp1=on&sp2=on&...
+    s.cgi?sp1=off&sp2=off&...
+
+
+Q: How can I put a number of documents available for search to search page?
+
+A: Please use the number from var/<DBName>/total file. This file is generated
+each time after saving delta files, and contains total number of indexed not
+empty URLs. Trust us - this is the only true and fair number.
+
+
+Q: While running index -N, I see some numbers before each "Adding URL"
+message. Could you explain their meaning?
+
+A: The following picture should explain it clearly:
+
+    (0 4 4 6 1 0 2 4) Adding URL: http://www.somesite.com/index.html
+     | | | | | | | |-- Number of available resolver processes
+     | | | | | | |-- Number of threads trying to connect to site now
+     | | | | | |-- Number of sites to which connection was failed last time
+     | | | | |-- Number of threads which are connected to site now
+     | | | |-- Number of sites which are waiting for processing now
+     | | |-- Number of sites which are processed now
+     | |-- Number of active fetches
+     |-- Ordinal thread number
+
+
+Q: Can't load DB driver: /usr/local/aspseek/lib/libmysqldb-1.2.7.so: Undefined
+symbol "__pure_virtual"
+
+A: You are probably using gcc 2.95.2 and just got hit by its bug.
+Use gcc 2.95.3 or later.
+
+
+Q: I run index and received the message "Don't run .../index with privileged
+user/group ID (UID<11, GID<11)". What's wrong?
+
+A: This just means that you can't run index (and searchd, too) as root user,
+for security reasons. You should create a special user for aspseek and run
+both programs under that user. See su man page for details.
+
+Q: Your software does not work (searchd dumps core, index does not do its work
+etc.). What should I do?
+
+A: Our stable releases are really stable, so if you are seeing some really
+weird bugs, please first try to recompile ASPseek without compiler
+optimization. This is needed because some versions of C++ compilers
+mis-compiles some pieces of C++ code (this can be either ASPseek source code
+or inline functions in STL headers), which leads to bugs and instability.
+
+To compile ASPseek without optimizations, please do the following
+    CXXFLAGS="-O0 -g" ./configure
+
+If ASPseek still behaves badly after that, there are chances that you have
+really found a bug. In that case, please read the next Q-A.
+
+
+Q: I have found a bug in ASPseek. What should I do?
+
+A: First, please read the previous Q-A. If you are still thinking it's a bug,
+please report it as described in BUGS file.

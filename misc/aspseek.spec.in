@@ -1,0 +1,274 @@
+%define name	@PACKAGE@
+%define oracle8	@USE_ORACLE8@
+%define mysql	@USE_MYSQL@
+%define unicode	@USE_UNICODE@
+%define apache  @USE_APACHE_MODULE@
+
+# Is this a build for 6.x or earlier?
+%define build6x 0
+%{?build_6x:%define build6x 1}
+
+# If this is 6.x, the default configuration has sysconfdir in /usr/etc,
+# and webserver dir is /home/httpd
+%if %{build6x}
+%define _sysconfdir /etc
+%define http_dir_root /home/httpd
+%else
+%define http_dir_root /var/www
+%endif
+
+%define sysconfdir      %{_sysconfdir}/%{name}
+%define localstatedir   %{_localstatedir}/%{name}
+%define libdir          %{_libdir}/%{name}
+# Directory for "index" and "searchd"
+%define sbindir		%{_bindir}
+
+%define aspseek_sys_user	aspseek
+
+%define http_dir_cgibin         %{http_dir_root}/cgi-bin
+%define http_dir_html           %{http_dir_root}/html
+%define dir_as			/%{name}
+%define dir_as_img		%{dir_as}/img
+%define http_dir_html_as        %{http_dir_html}%{dir_as}
+%define http_dir_html_as_img    %{http_dir_html}%{dir_as_img}
+
+Summary:	Advanced Internet search engine
+Name:     	%name
+Version: 	@VERSION@
+Release:	1
+License:	GPL
+Group:		Applications/Internet
+Source: 	http://www.aspseek.org/pkg/src/%{version}/%{name}-%{version}.tar.gz
+URL:		http://www.aspseek.org/
+Requires:	%{name}-db-lib = %{version}
+Provides:	%{name}-%{version}
+BuildRoot:	%{_tmppath}/%{name}-%{version}-root
+BuildPrereq:	zlib-devel
+DocDir:		%{_prefix}/share/doc
+
+%description
+ASPseek is an Internet search engine, written in C++ using the STL library.
+It consists of an indexing robot, a search daemon, and a CGI search frontend.
+It can index as many as a few million URLs and search for words and phrases,
+use wildcards, and do a Boolean search. Search results can be limited to time
+period given, site or Web space (set of sites) and sorted by relevance (some
+cool techniques are used) or date.
+
+ASPseek is optimized for multiple sites (threaded index, async DNS lookups,
+grouping results by site, Web spaces), but can be used for searching one site
+as well. ASPseek can work with multiple languages/encodings at once (including
+multibyte encodings such as Chinese) due to Unicode storage mode. Other
+features include stopwords and ispell support, a charset and language guesser,
+HTML templates for search results, excerpts, and query words highlighting.
+
+
+%if %{mysql}
+
+%package mysql-lib
+Summary:	MySQL backend driver for ASPseek
+Group:		Applications/Internet
+# For aspseek user to exist, we need aspseek package
+Prereq:		%{name}
+Requires:	mysql-server
+BuildPrereq:	mysql-devel
+Provides:	%{name}-db-lib = %{version}
+
+%description mysql-lib
+This driver acts as a database backend for ASPseek, so ASPseek will store its
+data in MySQL database.
+
+%files mysql-lib
+%defattr(-, root, root)
+%attr(755, root, root) %{libdir}/libmysqldb-%{version}.so
+%attr(755, root, root) %{libdir}/libmysqldb.la
+%dir %{sysconfdir}/sql/mysql
+%attr(644, root, root) %{sysconfdir}/sql/mysql/tables.sql
+%attr(755, root, root) %{sbindir}/aspseek-mysql-postinstall
+%attr(640, %{aspseek_sys_user}, root) %config(noreplace) %{sysconfdir}/db.conf
+
+%endif
+
+
+%if %{oracle8}
+
+%package oracle8-lib
+Summary:	Oracle 8i backend driver for ASPseek
+Group: 		Applications/Internet
+#Requires:	oracle
+Provides:	%{name}-db-lib-%{version}
+
+%description oracle8-lib
+This driver acts as a database backend for ASPseek, so ASPseek will store its
+data in Oracle 8i database.
+
+%files oracle8-lib
+%defattr(-, root, root)
+%attr(755, root, root) %{libdir}/liboracle8db-%{version}.so
+%dir %{sysconfdir}/sql/orcl
+%attr(644, root, root) %{sysconfdir}/sql/orcl/tables.sql
+
+%endif
+
+
+# Common stuff for client
+%package client
+Summary:	ASPseek client library and configuration files
+Group: 		Applications/Internet
+Requires:	webserver
+Provides:	%{name}-client-%{version}
+
+%description client
+This is a common configuration, documentation files and library required
+for any ASPseek search frontend. Currently available frontends are s.cgi
+and mod_aspseek.
+
+%files client
+%defattr(-, root, root)
+%doc doc/templates.txt
+%config(noreplace) %{sysconfdir}/s.htm
+%{sysconfdir}/s.htm-dist
+%attr(644, root, root) %{_mandir}/man5/s.htm.5.*
+%dir %{http_dir_html_as}
+%dir %{http_dir_html_as_img}
+%attr(644, root, root) %{http_dir_html_as_img}/*
+#%{libdir}/libaspseek.a
+%{libdir}/libaspseek.la
+%{libdir}/libaspseek.so
+%{libdir}/libaspseek.so.0
+%{libdir}/libaspseek.so.0.0.0
+
+
+# s.cgi - search frontend
+%package cgi
+Summary:	ASPseek search CGI frontend
+Group: 		Applications/Internet
+Requires:	%{name}-client-%{version}
+
+%description cgi
+This is s.cgi, which is used as a search frontend to ASPseek.
+
+%files cgi
+%defattr(-, root, root)
+%attr(644, root, root) %{_mandir}/man1/s.cgi.1.*
+%attr(755, root, root) %{http_dir_cgibin}/s.cgi
+
+
+# mod_aspseek for Apache
+%if %{apache}
+
+%define apache_moddir @APACHE_MODDIR@
+
+%package -n mod_%{name}
+Summary:	ASPseek module for Apache web server
+Group: 		Applications/Internet
+Requires:	apache
+Requires:	%{name}-client-%{version}
+Provides:	mod_%{name}-${version}
+BuildPrereq: 	apache-devel
+
+%description -n mod_%{name}
+This is DSO (in other words, a module) for Apache web server, which is
+used as a search frontend to ASPseek.
+Its functionality is about the same as of s.cgi.
+
+%files -n mod_%{name}
+%defattr(-, root, root)
+%attr(755, root, root) %{apache_moddir}/mod_aspseek.so
+%doc README-APACHEMODULE
+
+
+%endif
+
+# How to build the beast
+%prep
+%setup -q
+
+
+%build
+%configure --sysconfdir=%{sysconfdir} \
+           --localstatedir=%{localstatedir} \
+           --libdir=%{libdir} \
+	   --bindir=%{http_dir_cgibin} \
+	   --sbindir=%{sbindir}	\
+	   --mandir=%{_mandir} @RPM_CONFIGURE_FLAGS@
+
+%{__make}
+
+%pre
+# Add aspseek user (user shell is needed to run su)
+if egrep "^%{aspseek_sys_user}:" /etc/passwd >/dev/null 2>&1; then
+        echo "WARNING: User %{aspseek_sys_user} already exists" \
+                "- skipping creation"
+        exit 0
+else
+        useradd -d /%{localstatedir} -r %{aspseek_sys_user}
+fi
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install
+%if %{unicode}
+# charsets.conf is for non-unicode version only
+rm -f $RPM_BUILD_ROOT/%{sysconfdir}/charsets.conf{,-dist}
+%endif
+# Some postinstall moving for img
+mkdir -p $RPM_BUILD_ROOT/%{http_dir_html}
+mkdir -p $RPM_BUILD_ROOT/%{http_dir_html_as}
+mkdir -p $RPM_BUILD_ROOT/%{http_dir_html_as_img}
+mv $RPM_BUILD_ROOT/%{sysconfdir}/img/* $RPM_BUILD_ROOT/%{http_dir_html_as_img}
+# Add aspseek startup script
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+install -m 755 misc/aspseek $RPM_BUILD_ROOT/etc/rc.d/init.d
+
+# Changing links to images in s.htm
+f=$RPM_BUILD_ROOT/%{sysconfdir}/s.htm
+ftemp=`mktemp $f.XXXXXX`
+cat $f > $ftemp
+cat $ftemp | sed "s@IMG SRC=\"/img/@IMG SRC=\"%{dir_as_img}/@" > $f
+rm -f $ftemp
+
+# This file will be created by %post script
+touch $RPM_BUILD_ROOT/%{sysconfdir}/db.conf
+
+
+%clean                                                                                     
+rm -rf $RPM_BUILD_ROOT
+
+
+%files
+%defattr(-, root, root)
+%doc AUTHORS COPYING FAQ INSTALL NEWS README THANKS TODO README-RPM
+%doc RELEASE-NOTES
+%doc doc/unicode.txt doc/multibyte.txt
+%attr(644, root, root) %{_mandir}/man7/aspseek.7.*
+%attr(644, root, root) %{_mandir}/man5/aspseek.conf.5.*
+%attr(644, root, root) %{_mandir}/man5/searchd.conf.5.*
+%attr(644, root, root) %{_mandir}/man5/aspseek-sql.5.*
+%attr(644, root, root) %{_mandir}/man1/index.1.*
+%attr(644, root, root) %{_mandir}/man1/searchd.1.*
+%dir %{sysconfdir}
+%dir %{sysconfdir}/sql/
+%dir %{sysconfdir}/langmap/
+%config %{sysconfdir}/langmap/*
+%dir %{sysconfdir}/stopwords
+# Stopword lists can be edited by user
+%config(noreplace) %{sysconfdir}/stopwords/*
+%dir %{sysconfdir}/@RPM_TABLES_DIR@
+%config %{sysconfdir}/@RPM_TABLES_DIR@/*
+%config(noreplace) %{sysconfdir}/aspseek.conf
+%config(noreplace) %{sysconfdir}/searchd.conf
+%config(noreplace) %{sysconfdir}/stopwords.conf
+%config(noreplace) %{sysconfdir}/@RPM_TABLES_CONF@
+%{sysconfdir}/aspseek.conf-dist
+%{sysconfdir}/searchd.conf-dist
+%{sysconfdir}/stopwords.conf-dist
+%{sysconfdir}/@RPM_TABLES_CONF@-dist
+%attr(755, %{aspseek_sys_user}, root) %{sbindir}/index
+%attr(755, %{aspseek_sys_user}, root) %{sbindir}/searchd
+%attr(755, root, root) /etc/rc.d/init.d/aspseek
+%attr(755, %{aspseek_sys_user}, root) %dir %{localstatedir}
+
+
+%post
+chkconfig --add aspseek

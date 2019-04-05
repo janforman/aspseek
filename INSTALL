@@ -1,0 +1,236 @@
+ASPseek installation, run-time configuration and troubleshooting.
+
+
+Quick install
+=============
+For the impatient, here's what you need to do (please read Step-by-step install
+below for more information):
+
+* Install the appropriate RDBMS if you haven't done so.
+* Run './configure && make'.
+* Run 'make install' as root.
+* Create aspseek user ('adduser aspseek' or something like that).
+* Create new user, database and needed SQL tables in RDBMS (if you use MySQL,
+  run script named aspseek-mysql-postinstall, it should create all that).
+* Read and edit configuration files in etc installation directory.
+* Run sbin/index as aspseek user, wait for it to finish.
+* Run sbin/searchd -D as aspseek user.
+* Put s.cgi to your Web server's cgi-bin.
+* Put images from etc/img to /img dir under your web server document root
+* Run sbin/index on a regular basis to update database.
+* Open http://localhost/cgi-bin/s.cgi and do the search!
+
+
+Upgrade
+=======
+
+If you are upgrading from 1.2.9, please run index -H after upgrading
+to re-create citation index files. Note that this is time-consuming
+process, do not interrupt it! Alternatively, you can clear the whole
+database by running index -C, and reindex everything all over again.
+
+If you are upgrading from 1.2.8 or earlier versions, please note the
+following:
+
+1). If you had many sites and re-indexed them, please run index -H to
+re-create citation index files.
+
+2). If you have used "Cache" feature, please rename the SQL table "cache"
+to "rescache". This is done with "ALTER TABLE cache RENAME TO rescache"
+SQL statement.
+
+If you are upgrading from 1.1.x, there's nothing special to be done, just
+install over the old binaries, your configuration will be preserved. After
+that, restart searchd.
+
+If you are upgrading from 1.0.x, please note that default database format
+is incompatible with one of 1.0.x versions, because of new (better)
+storage modes and UNICODE support. So, while upgrading you basically have
+two options:
+
+1. (preferred) Delete SQL database content and even SQL tables itself, recreate
+it from etc/your_dbms/tables.sql, delete aspseek/var contents and re-index
+everything all over again.
+
+2. Use options --disable-fast-clones --disable-unicode to configure, and set
+"CompactStorage no" and "IncrementalCitations no" in both aspseek.conf and
+searchd.conf.
+Update: seems that ASPseek no longer works with --disable-unicode, and we
+(developers) see no reasons to fix it. So, just don't use it, it is deprecated.
+
+
+Please DON'T FORGET to upgrade s.cgi in your web server cgi-bin directory, as
+old s.cgi will not understand new searchd and can just stay in infinite idle
+loop or produce incorrect results.
+
+
+Step-by-step install
+====================
+
+
+1. System requirements
+----------------------
+
+We use ASPLinux distribution (http://www.asp-linux.com), which is RedHat
+compatible, to develop and run ASPseek, but is should run on (or be easy to
+port to - due to autoconf) other UNIX variants. At the moment the following
+platforms are supported:
+
+	Linux 2.x
+	FreeBSD 4.x
+
+Please report your success with other platforms to aseek@sw.com.sg.
+
+You also need RDBMS. MySQL 3.23 or later, or Oracle 8.1.5 or later are
+supported in this version. Support for more databases is planned for
+future releases.
+
+To build binaries, you need decent C++ compiler (we use GNU g++), STL library
+(we use one from libg++) and GNU make utility (non-GNU make can fail to work).
+
+NOTE for RedHat users: egcs from RedHat 6.0 and 6.1 are _broken_ and can't
+compile ASPseek sources correctly. Either upgrade egcs and libstdc++ to ones
+from RedHat 6.2, or compile without -O2 (type export CXXFLAGS="-O0" before
+./configure).
+
+
+2. Getting the sources
+----------------------
+
+You can always get the sources of latest ASPseek release from
+http://www.aspseek.org/sources.html. Download the source and untar it
+by running
+
+gzip -dc aspseek-x.y.z.tar.gz | tar xf -
+
+or, if you have GNU tar,
+
+tar xzf aspseek-x.y.z.tar.gz
+
+
+If you are curious and want to stay at the bleeding edge, you can get the
+latest development sources from anonymous CVS.
+
+To get the sources from CVS, you should use the following commands:
+export CVSROOT=:pserver:anoncvs@www.asplinux.ru:/home/cvs
+cvs login [Here you should type the password: anoncvs]
+cvs co aspseek
+cvs logout
+
+Next time, you do not need to run "cvs co aspseek" as the sources are already
+on your machine; just run "cvs update aspseek" instead.
+
+After fetching the sources from CVS, please run script ./cvsprep. You need
+to have some tools installed, notably autoconf, automake and libtool.
+
+PLEASE NOTE that if you use version from CVS, it may be unstable and maybe
+will not compile at all. So you should know what you are doing.
+
+CVS is also available for your viewing pleasure via Web at
+http://www.asplinux.ru/cgi-bin/cvsweb.cgi/aspseek/
+
+
+3. Configuration
+----------------
+
+cd aspseek-x.y.z
+./configure --your-options
+
+For example, to specify your non-standard MySQL location, add
+--with-mysql=/path/to/mysql. To specify ASPseek installation directory
+(instead of standard /usr/local/aspseek), add --prefix=/some/dir.
+
+If you need https:// support, please use --with-openssl flag. This will need
+OpenSSL (available from http://www.openssl.org) installed. If you have OpenSSL
+installed to non-standard location (say, /usr/ssl), use
+--with-openssl=/usr/ssl flag to configure.
+
+Run ./configure --help to see all available configure options.
+
+
+4. Compilation and installation
+-------------------------------
+
+Just run make && make install. On non-Linux systems, you should run GNU make
+instead, it is often installed as gmake.
+
+
+5. Run-time configuration
+-------------------------
+
+First, you should create RDMBS user, database and all needed SQL tables.
+See your RDBMS manual for details.
+
+In case of MySQL, you can use aspseek-mysql-postinstall script provided
+for your convenience. It should create all needed SQL stuff for you.
+
+Then,
+cd /usr/local/aspseek (or directory you have just installed ASPseek to)
+cd etc
+
+Two main configuration files are aspseek.conf and searchd.conf. You should
+edit these files manually and provide all necessary information such as
+RDBMS user name, password and database name, what sites do you want to
+index and how often etc. There are a lot of comments in the files
+so just read-and-modify. Also, aspseek.conf(5) and searchd.conf(5) man
+pages should be helpful.
+
+If you want ASPseek to search documents which contains information not only
+in English, look at ucharset.conf and stopwords.conf, there you should
+uncomment all needed charsets and stopword files.
+
+There is also a template file s.htm, which is used by search front-end s.cgi.
+It tells how search forms and results should be displayed. For the first
+time default template will work for you, but if you want to modify it,
+read man page s.htm(5) for in-depth explanation.
+
+
+6. First indexing
+-----------------
+
+Just run sbin/index. It will crawl the sites you put to aspseek.conf
+and put resulting data in SQL tables and in var/ directory of ASPseek
+installation.
+
+If you are indexing more than one server, flags -N and -R should be very
+useful.
+
+-N <num> sets the number of indexing threads (default is 1), and
+-R <num> sets the number of resolvers (default is NUM_THREADS/5 + 1)
+
+Setting number of indexing threads to more than a number of servers indexed
+makes no sense, because index gets one document at a time from one server.
+
+For other index flags, see index(1) man page.
+
+
+7. First searching
+------------------
+
+First, you should run sbin/searchd -D as aspseek user. This is search daemon,
+which provides interface to database, does actual search, caches search
+results and so on.
+
+Copy image files from etc/img installation directory to /img directory
+under your web server document root.
+
+Copy bin/s.cgi to your Web server cgi-bin directory and point your browser
+to it. You should see the search form.
+
+We will be happy to see a report about successful installation from you, so
+please send one to <aseek@sw.com.sg>.
+
+
+8. Further reading
+------------------
+
+Please read manual pages (starting from introductory aspseek(7) man page)
+and various files in doc/ subdirectory. Manual pages are also available online
+at http://www.aspseek.org/manual.html. All configuration files are heavily
+self-documented too.
+
+You are welcome to subscribe to ASPseek users mailing list to ask questions,
+share ideas, and communicate in general with other users and developers.
+To subscribe, please send mail to majordomo@lists.asplinux.ru with the line
+"subscribe aseek-users" in message body. List archives are available from
+http://www.mail-archive.com/aseek-users@lists.asplinux.ru/
